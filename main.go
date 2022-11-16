@@ -3,167 +3,132 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
 
-	"github.com/freebitdx/ridgepole/mysql"
-	"github.com/freebitdx/ridgepole/postgresql"
+	"github.com/h-nosaka/catwalk/base"
+	"github.com/h-nosaka/catwalk/mysql"
 )
 
 func main() {
+	var (
+		config string
+		output string
+		models string
+		name   string
+		help   bool
+	)
+	flag.StringVar(&config, "config", "./schema/schema.yaml", "schame yaml file path")
+	flag.StringVar(&config, "c", "./schema/schema.yaml", "schame yaml file path")
+	flag.StringVar(&output, "output", "./schema/dump", "dump file output directory path")
+	flag.StringVar(&output, "o", "./schema/dump", "dump file output directory path")
+	flag.StringVar(&models, "models", "./models", "models file output directory path")
+	flag.StringVar(&models, "m", "./models", "models file output directory path")
+	flag.StringVar(&name, "name", "app", "create databse name")
+	flag.StringVar(&name, "n", "app", "create databse name")
+	flag.BoolVar(&help, "help", false, "command help")
+	flag.BoolVar(&help, "h", false, "command help")
 	flag.Parse()
+	if help {
+		HelpCmd(flag.Arg(0))
+		return
+	}
 	switch flag.Arg(0) {
 	case "help":
-		help()
+		Help()
 	case "dump":
-		dump(flag.Args())
+		Dump(output)
 	case "diff":
-		diff(flag.Args())
+		Diff(config)
 	case "run":
-		run(flag.Args())
+		Run(config)
 	case "model":
-		model(flag.Args())
+		Model(config, models)
 	case "init":
-		initDatabase(flag.Args())
+		CreateDatabase(name)
 	default:
-		help()
+		Help()
 	}
 }
 
-func help() {
-	fmt.Print("Usage:\n\nridgepole <command> [arguments]\n\n")
+func Help() {
+	fmt.Print("Usage:\n\ncatwalk <command> [arguments]\n\n")
 	fmt.Print("The commands are:\n\n")
 	fmt.Print("\tdump      craete dump.sql and dump.yaml\n")
-	fmt.Print("\tdiff      create *.sql and show\n")
+	fmt.Print("\tdiff      show differential SQL\n")
 	fmt.Print("\trun       run database migration\n")
-	fmt.Print("\tmodel     create model\n")
+	fmt.Print("\tmodel     create golang models\n")
 	fmt.Print("\tinit      create database\n")
 	fmt.Print("\n")
 }
 
-func dump(args []string) {
-	if len(args) > 1 {
-		switch args[1] {
-		case "--help", "-h", "help":
-			fmt.Print("Usage: ridgepole dump\n")
-			return
-		}
+func HelpCmd(cmd string) {
+	switch cmd {
+	case "dump":
+		fmt.Print("Usage: catwalk dump -output=dir\n")
+	case "diff":
+		fmt.Print("Usage: catwalk diff -config=filepath [output]\n")
+	case "run":
+		fmt.Print("Usage: catwalk run -config=filepath\n")
+	case "model":
+		fmt.Print("Usage: catwalk model -config=filepath -models=dir\n")
+	case "init":
+		fmt.Print("Usage: catwalk init -name=databasename\n")
+	default:
+		fmt.Print("command not found\n")
 	}
-	Dump()
-}
-
-func diff(args []string) {
-	if len(args) > 1 {
-		switch args[1] {
-		case "--help", "-h", "help":
-			fmt.Print("Usage: ridgepole diff [output filename]\n")
-			return
-		default:
-			Diff(args[1])
-			return
-		}
-	}
-	fmt.Println(Diff())
-}
-
-func run(args []string) {
-	if len(args) > 1 {
-		switch args[1] {
-		case "--help", "-h", "help":
-			fmt.Print("Usage: ridgepole run [migrate filename]\n")
-			return
-		default:
-			Run(args[1])
-		}
-	} else {
-		Run()
-	}
-}
-
-func model(args []string) {
-	if len(args) > 1 {
-		switch args[1] {
-		case "--help", "-h", "help":
-			fmt.Print("Usage: ridgepole model [output path]\n")
-			return
-		default:
-			Model(args[1])
-		}
-	} else {
-		Model()
-	}
-}
-
-func initDatabase(args []string) {
-	if len(args) > 1 {
-		switch args[1] {
-		case "--help", "-h", "help":
-			fmt.Print("Usage: ridgepole init [database name]\n")
-			return
-		default:
-			CreateDatabase(args[1])
-		}
-	} else {
-		CreateDatabase()
-	}
-}
-
-func GetEnv(key, fallback string) string {
-	if value, ok := os.LookupEnv(key); ok {
-		return value
-	}
-	return fallback
 }
 
 func IsMySQL() bool {
-	return GetEnv("RDB_TYPE", "") == "mysql"
+	return base.GetEnv("RDB_TYPE", "") == "mysql"
 }
 
 func IsPostgres() bool {
-	return GetEnv("RDB_TYPE", "") == "postgres"
+	return base.GetEnv("RDB_TYPE", "") == "postgres"
 }
 
-func Dump() {
+func Dump(output string) {
 	if IsMySQL() {
-		mysql.Dump()
+		schema := mysql.NewSchemaFromDB()
+		schema.Sql(fmt.Sprintf("%s/dump.sql", output))
+		schema.Yaml(fmt.Sprintf("%s/dump.yaml", output))
 	}
-	if IsPostgres() {
-		postgresql.Dump()
-	}
+	// if IsPostgres() {
+	// 	postgresql.Dump()
+	// }
 }
 
-func Diff(filename ...string) string {
+func Diff(yamlpath string) string {
 	if IsMySQL() {
-		return mysql.Diff(filename...)
+		return mysql.NewSchema(yamlpath).Diff(mysql.NewSchemaFromDB())
 	}
-	if IsPostgres() {
-		return postgresql.Diff(filename...)
-	}
+	// if IsPostgres() {
+	// 	return postgresql.Diff(filename...)
+	// }
 	return ""
 }
 
-func Run(filename ...string) {
+func Run(yamlpath string) {
 	if IsMySQL() {
-		mysql.Run(filename...)
+		mysql.NewSchema(yamlpath).Run()
 	}
-	if IsPostgres() {
-		postgresql.Run(filename...)
-	}
+	// if IsPostgres() {
+	// 	postgresql.Run(filename...)
+	// }
 }
 
-func Model(path ...string) {
+func Model(yamlpath string, path ...string) {
 	if IsMySQL() {
-		mysql.Model(path...)
+		mysql.NewSchema(yamlpath).Model(path...)
 	}
-	if IsPostgres() {
-		postgresql.Model(path...)
-	}
+	// if IsPostgres() {
+	// 	postgresql.Model(path...)
+	// }
 }
 
 func CreateDatabase(name ...string) {
 	if IsMySQL() {
-		mysql.CreateDatabase(name...)
+		(&mysql.ISchema{}).CreateDatabase(name...)
 	}
-	if IsPostgres() {
-		postgresql.CreateDatabase(name...)
-	}
+	// if IsPostgres() {
+	// 	postgresql.CreateDatabase(name...)
+	// }
 }

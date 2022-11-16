@@ -4,36 +4,80 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/freebitdx/fbfiber/context"
+	"github.com/h-nosaka/catwalk/base"
+	"golang.org/x/exp/slices"
 )
 
-type PGColumn struct {
-	ColumnName             string
-	UdtName                string
-	ColumnDefault          string
-	IsNullable             string
-	CharacterMaximumLength int
-	NumericPrecision       int
-	Comment                *string `yaml:"comment,omitempty"`
-	Using                  *string `gorm:"->:false" yaml:"using,omitempty"`
-	Rename                 *string `gorm:"->:false" yaml:"rename,omitempty"`
+type IColumn struct {
+	Name     string  `gorm:"column:column_name"`
+	DataType string  `gorm:"column:udt_name"`
+	Defaults *string `gorm:"column:column_default" yaml:"default,omitempty"`
+	Null     bool    `gorm:"->:false" yaml:"nullable,omitempty"`
+	IsNull   string  `gorm:"column:is_nullable" yaml:"-"`
+	CharaMax int     `gorm:"column:character_maximum_length" yaml:"chara_max,omitempty"`
+	NumMax   int     `gorm:"column:numeric_precision" yaml:"num_max,omitempty"`
+	Comment  *string `gorm:"column:comment" yaml:"comment,omitempty"`
+	Using    *string `gorm:"->:false" yaml:"using,omitempty"`
+	Rename   *string `gorm:"->:false" yaml:"rename,omitempty"`
 }
 
-func (p *PGColumn) GetColumnType() string {
-	switch p.UdtName {
+func NewColumn(name string, dataType string, charaMax int, numMax int, defaults *string, nullable *bool, comment *string, using *string, rename *string) IColumn {
+	null := true
+	if nullable != nil {
+		null = *nullable
+	}
+	return IColumn{
+		Name:     name,
+		DataType: dataType,
+		CharaMax: charaMax,
+		NumMax:   numMax,
+		Defaults: defaults,
+		Null:     null,
+		Comment:  comment,
+		Using:    using,
+		Rename:   rename,
+	}
+}
+
+func DefaultColumn(seq string, cols ...IColumn) []IColumn {
+	rs := []IColumn{
+		NewColumn("id", "int4", 0, 32, base.String(fmt.Sprintf("nextval('%s'::regclass)", seq)), base.Bool(false), base.String("primary key"), nil, nil),
+	}
+	rs = append(rs, cols...)
+	rs = append(
+		rs,
+		TimestampColumn()...,
+	)
+	return rs
+}
+
+func TimestampColumn() []IColumn {
+	return []IColumn{
+		NewColumn("created_at", "timestamp", 0, 0, base.String("(now())::timestamp(0) without time zone"), nil, base.String("作成日"), nil, nil),
+		NewColumn("updated_at", "timestamp", 0, 0, base.String("(now())::timestamp(0) without time zone"), nil, base.String("更新日"), nil, nil),
+	}
+}
+
+func (p *IColumn) GetColumnType() string {
+	switch p.DataType {
 	case "int4":
-		if p.NumericPrecision > 0 && p.NumericPrecision < 32 {
-			return fmt.Sprintf("integer(%d)", p.NumericPrecision)
+		if p.NumMax > 0 && p.NumMax < 32 {
+			return fmt.Sprintf("integer(%d)", p.NumMax)
 		}
 		return "integer"
+	case "int8":
+		if p.NumMax > 0 && p.NumMax < 64 {
+			return fmt.Sprintf("bigint(%d)", p.NumMax)
+		}
+		return "bigint"
 	case "varchar":
-		if p.CharacterMaximumLength > 0 {
-			return fmt.Sprintf("character varying(%d)", p.CharacterMaximumLength)
+		if p.CharaMax > 0 {
+			return fmt.Sprintf("character varying(%d)", p.CharaMax)
 		}
 		return "character varying"
 	case "bpchar":
-		if p.CharacterMaximumLength > 0 {
-			return fmt.Sprintf("character(%d)", p.CharacterMaximumLength)
+		if p.CharaMax > 0 {
+			return fmt.Sprintf("character(%d)", p.CharaMax)
 		}
 		return "character"
 	case "timestamp":
@@ -49,149 +93,149 @@ func (p *PGColumn) GetColumnType() string {
 	case "_macaddr":
 		return "macaddr[]"
 	case "json", "text", "cidr", "inet", "macaddr", "date":
-		return p.UdtName
+		return p.DataType
 	default:
-		panic(fmt.Sprintf("unknown udtname: %s", p.UdtName))
+		panic(fmt.Sprintf("unknown udtname: %s", p.DataType))
 	}
 }
 
-func (p *PGColumn) GetDefault() string {
-	if p.ColumnDefault != "" {
-		return fmt.Sprintf(" DEFAULT %s", p.ColumnDefault)
+func (p *IColumn) GetDefault() string {
+	if p.Defaults != nil && *p.Defaults != "" {
+		return fmt.Sprintf(" DEFAULT %s", *p.Defaults)
 	}
 	return ""
 }
 
-func (p *PGColumn) GetNullable() string {
-	if p.IsNullable == "NO" {
+func (p *IColumn) GetNullable() string {
+	if !p.Null {
 		return " NOT NULL"
 	}
 	return ""
 }
 
-func (p *PGColumn) Append() string {
+func (p *IColumn) Append() string {
 	return fmt.Sprintf(
 		"\t%s %s%s%s",
-		p.ColumnName,
+		p.Name,
 		p.GetColumnType(),
 		p.GetDefault(),
 		p.GetNullable(),
 	)
 }
 
-func (p *PGColumn) Create(t *PGTable) string {
+func (p *IColumn) Create(t *ITable) string {
 	return fmt.Sprintf(
 		"ALTER TABLE %s.%s ADD COLUMN %s;\n\n",
-		t.Schemaname,
-		t.Tablename,
+		t.Schema,
+		t.Name,
 		p.Append(),
 	)
 }
 
-func (p *PGColumn) Drop(t *PGTable) string {
+func (p *IColumn) Drop(t *ITable) string {
 	return fmt.Sprintf(
 		"ALTER TABLE %s.%s DROP COLUMN %s;\n\n",
-		t.Schemaname,
-		t.Tablename,
-		p.ColumnName,
+		t.Schema,
+		t.Name,
+		p.Name,
 	)
 }
 
-func (p *PGColumn) Type(t *PGTable) string {
+func (p *IColumn) Type(t *ITable) string {
 	if p.Using != nil {
 		return fmt.Sprintf(
 			"ALTER TABLE %s.%s ALTER COLUMN %s TYPE %s USING %s;\n\n",
-			t.Schemaname,
-			t.Tablename,
-			p.ColumnName,
+			t.Schema,
+			t.Name,
+			p.Name,
 			p.GetColumnType(),
 			*p.Using,
 		)
 	}
 	return fmt.Sprintf(
 		"ALTER TABLE %s.%s ALTER COLUMN %s TYPE %s;\n\n",
-		t.Schemaname,
-		t.Tablename,
-		p.ColumnName,
+		t.Schema,
+		t.Name,
+		p.Name,
 		p.GetColumnType(),
 	)
 }
 
-func (p *PGColumn) SetNullable(t *PGTable) string {
+func (p *IColumn) SetNullable(t *ITable) string {
 	value := "DROP NOT NULL"
-	if p.IsNullable == "NO" {
+	if !p.Null {
 		value = "SET NOT NULL"
 	}
 	return fmt.Sprintf(
 		"ALTER TABLE %s.%s ALTER COLUMN %s %s;\n\n",
-		t.Schemaname,
-		t.Tablename,
-		p.ColumnName,
+		t.Schema,
+		t.Name,
+		p.Name,
 		value,
 	)
 }
 
-func (p *PGColumn) SetDefault(t *PGTable) string {
+func (p *IColumn) SetDefault(t *ITable) string {
 	value := "DROP DEFAULT"
-	if p.ColumnDefault != "" {
+	if p.Defaults != nil && *p.Defaults != "" {
 		value = fmt.Sprintf("SET %s", p.GetDefault())
 	}
 	return fmt.Sprintf(
 		"ALTER TABLE %s.%s ALTER COLUMN %s %s;\n\n",
-		t.Schemaname,
-		t.Tablename,
-		p.ColumnName,
+		t.Schema,
+		t.Name,
+		p.Name,
 		value,
 	)
 }
 
-func (p *PGColumn) SetComment(t *PGTable) string {
+func (p *IColumn) SetComment(t *ITable) string {
 	if p.Comment == nil {
 		return ""
 	}
-	return fmt.Sprintf("COMMENT ON COLUMN %s.%s.%s IS '%s';\n\n", t.Schemaname, t.Tablename, p.ColumnName, *p.Comment)
+	return fmt.Sprintf("COMMENT ON COLUMN %s.%s.%s IS '%s';\n\n", t.Schema, t.Name, p.Name, *p.Comment)
 }
 
-func (p *PGColumn) DropComment(t *PGTable) string {
-	return fmt.Sprintf("COMMENT ON COLUMN %s.%s.%s IS NULL;\n\n", t.Schemaname, t.Tablename, p.ColumnName)
+func (p *IColumn) DropComment(t *ITable) string {
+	return fmt.Sprintf("COMMENT ON COLUMN %s.%s.%s IS NULL;\n\n", t.Schema, t.Name, p.Name)
 }
 
-func (p *PGColumn) RenameColumn(t *PGTable) string {
+func (p *IColumn) RenameColumn(t *ITable) string {
 	if p.Rename != nil {
 		return fmt.Sprintf(
 			"ALTER TABLE %s.%s RENAME COLUMN %s TO %s;\n",
-			t.Schemaname,
-			t.Tablename,
-			p.ColumnName,
+			t.Schema,
+			t.Name,
+			p.Name,
 			*p.Rename,
 		)
 	}
 	return ""
 }
 
-func (p *PGColumn) IsDrop(src *[]PGColumn, table *PGTable) string {
+func (p *IColumn) IsDrop(src *[]IColumn, table *ITable) string {
 	buf := bytes.NewBuffer([]byte{})
-	dest := PGColumn{}
+	dest := IColumn{}
 	for _, item := range *src {
-		if item.ColumnName == p.ColumnName {
+		if item.Name == p.Name {
 			dest = item
 		}
 	}
-	if dest.ColumnName == "" {
+	if dest.Name == "" {
 		buf.WriteString(p.Drop(table))
 	}
 	return buf.String()
 }
 
-func (p PGColumn) Diff(src *[]PGColumn, table *PGTable) string {
+func (p IColumn) Diff(src *[]IColumn, table *ITable) string {
 	buf := bytes.NewBuffer([]byte{})
-	dest := PGColumn{}
+	dest := IColumn{}
 	for _, item := range *src {
-		if item.ColumnName == p.ColumnName {
+		if item.Name == p.Name {
 			dest = item
 		}
 	}
-	if dest.ColumnName == "" {
+	if dest.Name == "" {
 		buf.WriteString(p.Create(table))
 	} else if p.Create(table) != dest.Create(table) {
 		if p.SetNullable(table) != dest.SetNullable(table) {
@@ -214,11 +258,13 @@ func (p PGColumn) Diff(src *[]PGColumn, table *PGTable) string {
 	return buf.String()
 }
 
-func (p *PGColumn) GetGoType() string {
+func (p *IColumn) GetGoType() string {
 	value := ""
-	switch p.UdtName {
+	switch p.DataType {
 	case "int4", "int2":
 		value = "int"
+	case "int8":
+		value = "int64"
 	case "varchar", "bpchar", "json", "text", "macaddr":
 		value = "string"
 	case "timestamp", "date":
@@ -233,19 +279,19 @@ func (p *PGColumn) GetGoType() string {
 		// value = "pgtype.Inet"
 		value = "string" // TODO: Inet型だとSQLがうまくいかないケースがあるようなのでいったんString
 	default:
-		panic(fmt.Sprintf("unknown udtname: %s", p.UdtName))
+		panic(fmt.Sprintf("unknown udtname: %s", p.DataType))
 	}
-	if p.IsNullable == "NO" {
+	if !p.Null {
 		return value
 	}
 	return fmt.Sprintf("*%s", value)
 }
 
-func (p *PGColumn) GetGoTag(table *PGTable, indexes *[]PGIndex) string {
+func (p *IColumn) GetGoTag(table *ITable) string {
 	ok := false
-	for _, index := range *indexes {
-		if index.ConstraintType != nil && *index.ConstraintType == "PRIMARY KEY" && index.Schemaname == table.Schemaname && index.Tablename == table.Tablename {
-			if !context.ArrayInclude(index.Columns, p.ColumnName) {
+	for _, index := range table.Indexes {
+		if index.ConstraintType != nil && *index.ConstraintType == "PRIMARY KEY" {
+			if !slices.Contains(index.Columns, p.Name) {
 				ok = true
 			}
 		}
@@ -253,7 +299,7 @@ func (p *PGColumn) GetGoTag(table *PGTable, indexes *[]PGIndex) string {
 	if ok {
 		return ` gorm:"primarykey"`
 	}
-	switch p.UdtName {
+	switch p.DataType {
 	case "_int4":
 		return ` gorm:"type:integer[]"`
 	case "_varchar", "_macaddr":
@@ -262,7 +308,7 @@ func (p *PGColumn) GetGoTag(table *PGTable, indexes *[]PGIndex) string {
 	return ""
 }
 
-func (p *PGColumn) GetGoComment() string {
+func (p *IColumn) GetGoComment() string {
 	if p.Comment != nil && len(*p.Comment) > 0 {
 		return fmt.Sprintf(" // %s", *p.Comment)
 	}

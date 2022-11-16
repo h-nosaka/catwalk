@@ -4,19 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 
-	"github.com/freebitdx/fbfiber/context"
-
 	"github.com/gertd/go-pluralize"
+	"github.com/h-nosaka/catwalk/base"
 	"github.com/iancoleman/strcase"
-	"gorm.io/gorm"
+	"golang.org/x/exp/slices"
 )
-
-type IMethod struct {
-	Method  string
-	Imports *[]string
-}
 
 type ITable struct {
 	Schema      string        `gorm:"column:TABLE_SCHEMA"`
@@ -29,11 +24,12 @@ type ITable struct {
 	Foreignkeys []IForeignkey `gorm:"->:false"`
 	Enums       []IEnum       `gorm:"->:false"`
 	Methods     []IMethod     `gorm:"->:false"`
+	Relations   []IRelation   `gorm:"->:false"`
 }
 
-func (p *ITable) GetColumn(db *gorm.DB) {
+func (p *ITable) GetColumn() {
 	cols := []IColumn{}
-	db.Raw(fmt.Sprintf(GetColumns, p.Schema, p.Name)).Scan(&cols)
+	base.DB.Raw(fmt.Sprintf(GetColumns, p.Schema, p.Name)).Scan(&cols)
 	p.Columns = []IColumn{}
 	for _, col := range cols {
 		if col.Defaults != nil && *col.Defaults == "" {
@@ -50,19 +46,19 @@ func (p *ITable) GetColumn(db *gorm.DB) {
 	}
 }
 
-func (p *ITable) GetIndexes(db *gorm.DB) {
+func (p *ITable) GetIndexes() {
 	p.Indexes = []IIndex{}
 	var indexes []IIndex
-	db.Raw(fmt.Sprintf(GetIndexes, p.Schema, p.Name)).Scan(&indexes)
+	base.DB.Raw(fmt.Sprintf(GetIndexes, p.Schema, p.Name)).Scan(&indexes)
 	for _, index := range indexes {
-		index.GetColumn(db, p)
+		index.GetColumn(p)
 		index.Unique = index.NonUnique == 0
 		p.Indexes = append(p.Indexes, index)
 	}
 }
 
-func (p *ITable) GetForeignkeys(db *gorm.DB) {
-	db.Raw(fmt.Sprintf(GetForeignkeys, p.Schema, p.Name)).Scan(&p.Foreignkeys)
+func (p *ITable) GetForeignkeys() {
+	base.DB.Raw(fmt.Sprintf(GetForeignkeys, p.Schema, p.Name)).Scan(&p.Foreignkeys)
 }
 
 func (p *ITable) Create() string {
@@ -154,9 +150,9 @@ func (p ITable) Diff(src *[]ITable) string {
 	return buf.String()
 }
 
-func (p *ITable) GoModel(path string) {
+func (p *ITable) CreateGoModel(path string) {
 	buf := bytes.NewBuffer([]byte{})
-	buf.WriteString("package model\n\n")
+	buf.WriteString("package models\n\n")
 	// インポート定義
 	imports := []string{`"time"`}
 	if p.IsDB == nil || (p.IsDB != nil && *p.IsDB) {
@@ -165,7 +161,7 @@ func (p *ITable) GoModel(path string) {
 	for _, item := range p.Columns {
 		switch item.DataType {
 		case "json":
-			if context.ArrayInclude(imports, `"encoding/json"`) {
+			if !slices.Contains(imports, `"encoding/json"`) {
 				imports = append(imports, `"encoding/json"`)
 			}
 		}
@@ -175,6 +171,12 @@ func (p *ITable) GoModel(path string) {
 			imports = append(imports, *item.Imports...)
 		}
 	}
+	for _, item := range p.Enums {
+		if item.Type == EnumTypeUint && !slices.Contains(imports, `"encoding/json"`) {
+			imports = append(imports, `"encoding/json"`)
+		}
+	}
+
 	buf.WriteString(fmt.Sprintf("import (\n\t%s\n)\n\n", strings.Join(imports, "\n\t")))
 	// コメント処理
 	if p.Comment != nil {
@@ -217,6 +219,14 @@ func (p *ITable) GoModel(path string) {
 			// fmt.Sprintf("foreignKey:%s;references:%s", strcase.ToCamel(item.Column), strcase.ToCamel(item.RefColumn)),
 		))
 	}
+	for _, item := range p.Relations {
+		buf.WriteString(fmt.Sprintf(
+			"\t%s `gorm:\"%s\"`\n",
+			item.GetRelation(),
+			item.GetReference(p),
+			// fmt.Sprintf("foreignKey:%s;references:%s", strcase.ToCamel(item.Column), strcase.ToCamel(item.RefColumn)),
+		))
+	}
 	buf.WriteString("}\n\n")
 	// テーブル名が複数形でない場合の処理
 	if con.IsSingular(p.Name) {
@@ -249,7 +259,7 @@ func (p *ITable) GoModel(path string) {
 			buf.WriteString("}\n\n")
 		}
 	}
-	// mapping.yamlで定義されたactionを追加
+	// Methodsで定義されたactionを追加
 	for _, item := range p.Methods {
 		buf.WriteString(fmt.Sprintf("%s\n\n", item.Method))
 	}
@@ -266,74 +276,62 @@ func (p *ITable) GoModel(path string) {
 	}
 }
 
-func (p *ITable) DartModel(path string) string {
+func (p *ITable) CreateSchemaFile() []byte {
+	// con := pluralize.NewClient()
 	buf := bytes.NewBuffer([]byte{})
-	init := bytes.NewBuffer([]byte{})
+	buf.WriteString(`package schema
 
-	// コメント処理
+import (
+	"github.com/h-nosaka/catwalk/base"
+	db "github.com/h-nosaka/catwalk/mysql"
+)
+
+`)
+	buf.WriteString(fmt.Sprintf("func %s() db.ITable {\n", strcase.ToCamel(p.Name)))
+	buf.WriteString("	return db.ITable{\n")
+	buf.WriteString(fmt.Sprintf(`		Schema: "%s",
+`, p.Schema))
+	buf.WriteString(fmt.Sprintf(`		Name: "%s",
+`, p.Name))
 	if p.Comment != nil {
-		buf.WriteString(fmt.Sprintf("// %s\n", *p.Comment))
+		buf.WriteString(fmt.Sprintf(`		Comment: base.String("%s"),
+`, *p.Comment))
 	}
-	con := pluralize.NewClient()
-	table := con.Singular(p.Name)
-	// Enumの定義
-	for _, enum := range p.Enums {
-		buf.WriteString(enum.DartCreate(p))
-	}
-	// 構造体定義
-	buf.WriteString("@JsonSerializable()\n")
-	buf.WriteString(fmt.Sprintf("class %s {\n", strcase.ToCamel(table)))
-	// テーブルカラムの定義
-	buf.WriteString("\t// column\n")
-	for _, item := range p.Columns {
-		data := item.GetDartType()
-		// for _, enum := range mapping.Enums {
-		// 	if p.Tablename == enum.Tablename && item.ColumnName == enum.Columnname {
-		// 		data += fmt.Sprintf("|%s", enum.GoStructName())
-		// 	}
-		// }
-		buf.WriteString(fmt.Sprintf(
-			"\tlate %s %s;%s\n",
-			data,
-			strcase.ToLowerCamel(item.Name),
-			item.GetGoComment(), // コメント処理
-		))
-		required := ""
-		if !item.Null {
-			required = "required "
+	buf.WriteString("		Columns: []db.IColumn{\n")
+	for _, col := range p.Columns {
+		def := "nil"
+		if col.Defaults != nil && *col.Defaults != "" {
+			def = fmt.Sprintf(`base.String("%s")`, *col.Defaults)
 		}
-		init.WriteString(fmt.Sprintf(
-			"\t\t%sthis.%s,\n",
-			required,
-			strcase.ToLowerCamel(item.Name),
-		))
-	}
-	buf.WriteString("\n")
-	// リレーションの定義
-	buf.WriteString("\t// relation\n")
-	for _, item := range p.Foreignkeys {
-		buf.WriteString(fmt.Sprintf(
-			"\t%s\n",
-			item.GetDartRelation(),
-		))
-		property := strcase.ToLowerCamel(con.Singular(item.RefTable))
-		if item.HasOne {
-			property = strcase.ToLowerCamel(item.RefTable)
+		null := fmt.Sprintf("base.Bool(%s)", strconv.FormatBool(col.Null))
+		comment := "nil"
+		if col.Comment != nil && *col.Comment != "" {
+			comment = fmt.Sprintf(`base.String("%s")`, *col.Comment)
 		}
-		init.WriteString(fmt.Sprintf(
-			"\t\tthis.%s,\n",
-			property,
-		))
+		extra := "nil"
+		if col.Extra != nil && *col.Extra != "" {
+			extra = fmt.Sprintf(`base.String("%s")`, *col.Extra)
+		}
+		buf.WriteString(fmt.Sprintf(`			db.NewColumn("%s", "%s", %s, %s, %s, %s, nil),
+`, col.Name, col.DataType, extra, def, null, comment))
 	}
-	// 初期化の定義
-	buf.WriteString("\t// init\n")
-	buf.WriteString(fmt.Sprintf("\t%s({\n", strcase.ToCamel(table)))
-	buf.WriteString(init.String())
-	buf.WriteString("\t});\n\n")
-	// json化の定義
-	buf.WriteString(fmt.Sprintf("\tfactory %s.fromJson(Map<String, dynamic> json) => _$%sFromJson(json);\n", strcase.ToCamel(table), strcase.ToCamel(table)))
-	buf.WriteString(fmt.Sprintf("\tMap<String, dynamic> toJson() => _$%sToJson(this);\n", strcase.ToCamel(table)))
-
-	buf.WriteString("}\n\n")
-	return buf.String()
+	buf.WriteString("		},\n")
+	buf.WriteString("		Indexes: []db.IIndex{\n")
+	for _, idx := range p.Indexes {
+		buf.WriteString(fmt.Sprintf(`			db.NewIndex("%s", base.Bool(%t), "%s"),
+`, idx.Name, idx.Unique, strings.Join(idx.Columns, `", "`)))
+	}
+	buf.WriteString("		},\n")
+	buf.WriteString("		Foreignkeys: []db.IForeignkey{\n")
+	for _, fk := range p.Foreignkeys {
+		buf.WriteString(fmt.Sprintf(`			db.NewFK("%s", "%s", "%s", "%s", true, false),
+`, fk.Name, fk.Column, fk.RefTable, fk.RefColumn))
+	}
+	buf.WriteString("		},\n")
+	buf.WriteString(`		Enums: []db.IEnum{},
+		Methods: []db.IMethod{},
+		Relations: []db.IRelation{},
+`)
+	buf.WriteString("	}\n}\n")
+	return buf.Bytes()
 }

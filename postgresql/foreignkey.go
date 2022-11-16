@@ -5,73 +5,104 @@ import (
 	"fmt"
 
 	"github.com/gertd/go-pluralize"
+	"github.com/iancoleman/strcase"
 )
 
-type PGForeignkey struct {
-	TableSchema    string
-	TableName      string
-	ConstraintName string
-	Columnname     string
-	Reftable       string
-	Refcolumn      string
+type IForeignkey struct {
+	Name      string `gorm:"column:constraint_name"`
+	Column    string `gorm:"column:columnname"`
+	RefTable  string `gorm:"column:reftable"`
+	RefColumn string `gorm:"column:refcolumn"`
+	HasOne    bool   `gorm:"->:false"`
+	HasAny    bool   `gorm:"->:false"`
 }
 
-func (p *PGForeignkey) Create() string {
+type IRelation struct {
+	Column    string
+	RefTable  string
+	RefColumn string
+	HasOne    bool
+}
+
+func NewFK(name string, column string, reftable string, refcolumn string, hasone bool, any bool) IForeignkey {
+	return IForeignkey{
+		Name:      name,
+		Column:    column,
+		RefTable:  reftable,
+		RefColumn: refcolumn,
+		HasOne:    hasone,
+		HasAny:    any,
+	}
+}
+
+func (p *IForeignkey) Create(t *ITable) string {
 	return fmt.Sprintf(
 		"ALTER TABLE ONLY %s.%s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s.%s(%s);\n\n",
-		p.TableSchema,
-		p.TableName,
-		p.ConstraintName,
-		p.Columnname,
-		p.TableSchema,
-		p.Reftable,
-		p.Refcolumn,
+		t.Schema,
+		t.Name,
+		p.Name,
+		p.Column,
+		t.Schema,
+		p.RefTable,
+		p.RefColumn,
 	)
 }
 
-func (p *PGForeignkey) Drop() string {
+func (p *IForeignkey) Drop(t *ITable) string {
 	return fmt.Sprintf(
 		"ALTER TABLE %s.%s DROP CONSTRAINT %s;\n",
-		p.TableSchema,
-		p.TableName,
-		p.ConstraintName,
+		t.Schema,
+		t.Name,
+		p.Name,
 	)
 }
 
-func (p PGForeignkey) Diff(src *[]PGForeignkey) string {
+func (p IForeignkey) Diff(t *ITable, src *[]IForeignkey) string {
 	buf := bytes.NewBuffer([]byte{})
-	dest := PGForeignkey{}
+	dest := IForeignkey{}
 	for _, item := range *src {
-		if item.ConstraintName == p.ConstraintName {
+		if item.Name == p.Name {
 			dest = item
 		}
 	}
-	if dest.ConstraintName == "" {
-		buf.WriteString(p.Create())
-	} else if p.Create() != dest.Create() {
-		buf.WriteString(dest.Drop())
-		buf.WriteString(p.Create())
+	if dest.Name == "" {
+		buf.WriteString(p.Create(t))
+	} else if p.Create(t) != dest.Create(t) {
+		buf.WriteString(dest.Drop(t))
+		buf.WriteString(p.Create(t))
 	}
 	return buf.String()
 }
 
-func (p *PGForeignkey) GetRelation(reverse bool, model string, src *[]Mapping) string {
-	for _, m := range *src {
-		if reverse {
-			if p.Reftable == m.Tablename && p.TableName == m.Reftable && p.Refcolumn == m.Columnname && p.Columnname == m.Refcolumn {
-				if m.Association == "MANY" {
-					con := pluralize.NewClient()
-					return fmt.Sprintf("%s []%s", con.Plural(model), model)
-				}
-			}
-		} else {
-			if p.TableName == m.Tablename && p.Reftable == m.Reftable && p.Columnname == m.Columnname && p.Refcolumn == m.Refcolumn {
-				if m.Association == "MANY" {
-					con := pluralize.NewClient()
-					return fmt.Sprintf("%s []%s", con.Plural(model), model)
-				}
-			}
-		}
+func (p *IForeignkey) GetReference() string {
+	if p.HasAny {
+		return fmt.Sprintf("foreignKey:%s;references:%s", strcase.ToCamel(p.RefColumn), strcase.ToCamel(p.Column))
+	}
+	return fmt.Sprintf("foreignKey:%s;references:%s", strcase.ToCamel(p.Column), strcase.ToCamel(p.RefColumn))
+}
+
+func (p *IForeignkey) GetRelation() string {
+	con := pluralize.NewClient()
+	model := strcase.ToCamel(con.Singular(p.RefTable))
+	if !p.HasOne {
+		return fmt.Sprintf("%s []%s", strcase.ToCamel(p.RefTable), model)
+	}
+	return fmt.Sprintf("%s *%s", model, model)
+}
+
+func (p *IRelation) GetReference(t *ITable) string {
+	con := pluralize.NewClient()
+	if !p.HasOne && strcase.ToCamel(p.Column) == "Id" && p.RefColumn == fmt.Sprintf("%s_id", con.Singular(t.Name)) {
+		return fmt.Sprintf("foreignKey:%s", strcase.ToCamel(p.Column))
+	}
+	return fmt.Sprintf("foreignKey:%s;references:%s", strcase.ToCamel(p.Column), strcase.ToCamel(p.RefColumn))
+}
+
+func (p *IRelation) GetRelation() string {
+	con := pluralize.NewClient()
+	model := strcase.ToCamel(con.Singular(p.RefTable))
+	if !p.HasOne {
+		return fmt.Sprintf("%s []%s", strcase.ToCamel(p.RefTable), model)
 	}
 	return fmt.Sprintf("%s *%s", model, model)
 }

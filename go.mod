@@ -1,30 +1,21 @@
-module github.com/freebitdx/ridgepole
+module github.com/h-nosaka/catwalk
 
-go 1.17
-
-replace github.com/freebitdx/fbfiber => ../fbfiber
+go 1.19
 
 require (
-	github.com/freebitdx/fbfiber v0.0.0-00010101000000-000000000000
 	github.com/gertd/go-pluralize v0.2.0
 	github.com/iancoleman/strcase v0.2.0
+	go.uber.org/zap v1.21.0
+	golang.org/x/exp v0.0.0-20221114191408-850992195362
 	gopkg.in/yaml.v2 v2.4.0
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/driver/postgres v1.3.1
 	gorm.io/gorm v1.23.3
+	moul.io/zapgorm2 v1.1.3
 )
 
 require (
-	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/elastic/go-elasticsearch/v7 v7.17.1 // indirect
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
-	github.com/go-playground/validator/v10 v10.10.1 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
-	github.com/gofiber/fiber/v2 v2.30.0 // indirect
-	github.com/gofiber/jwt/v3 v3.2.9 // indirect
-	github.com/golang-jwt/jwt/v4 v4.4.0 // indirect
-	github.com/gomodule/redigo v1.8.8 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.11.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
@@ -35,20 +26,12 @@ require (
 	github.com/jackc/pgx/v4 v4.15.0 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.15.1 // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/kr/pretty v0.3.0 // indirect
 	github.com/lib/pq v1.10.4 // indirect
-	github.com/tidwall/gjson v1.14.0 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.0 // indirect
-	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.34.0 // indirect
-	github.com/valyala/tcplisten v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.21.0 // indirect
 	golang.org/x/crypto v0.0.0-20220321153916-2c7772ba3064 // indirect
-	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
 	golang.org/x/text v0.3.7 // indirect
-	moul.io/zapgorm2 v1.1.3 // indirect
+	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )

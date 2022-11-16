@@ -3,29 +3,51 @@ package mysql
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
+	"os/exec"
+	"strings"
 
+	"github.com/h-nosaka/catwalk/base"
 	"gopkg.in/yaml.v2"
 )
 
 type ISchema struct {
+	Name   string // DBName
 	Tables []ITable
 }
 
-func (p ISchema) Load(filename string) *ISchema {
-	fp, err := os.Open(filename)
+func NewSchema(yamlpath string) *ISchema {
+	fp, err := os.Open(yamlpath)
 	if err != nil {
 		panic(err)
 	}
-	data, err := ioutil.ReadAll(fp)
+	data, err := io.ReadAll(fp)
 	if err != nil {
 		panic(err)
 	}
-	if err := yaml.Unmarshal(data, &p); err != nil {
+	rs := ISchema{}
+	if err := yaml.Unmarshal(data, &rs); err != nil {
 		panic(err)
 	}
-	return &p
+	return &rs
+}
+
+func NewSchemaFromDB() *ISchema {
+	rs := ISchema{
+		Name: base.DBName,
+	}
+	// table取得
+	rs.Tables = []ITable{}
+	tables := []ITable{}
+	base.DB.Raw(fmt.Sprintf(GetTables, base.DBName)).Scan(&tables)
+	for _, table := range tables {
+		table.GetColumn()
+		table.GetIndexes()
+		table.GetForeignkeys()
+		rs.Tables = append(rs.Tables, table)
+	}
+	return &rs
 }
 
 func (p *ISchema) Dump() string {
@@ -60,7 +82,7 @@ func (p *ISchema) Yaml(filename string) {
 		panic(err)
 	}
 	if _, err := fp.Write(data); err != nil {
-		fmt.Printf("WriteString Error: %s\n", err.Error())
+		fmt.Printf("Write Error: %s\n", err.Error())
 	}
 }
 
@@ -70,4 +92,55 @@ func (p *ISchema) Diff(src *ISchema) string {
 		buf.WriteString(item.Diff(&src.Tables))
 	}
 	return buf.String()
+}
+
+func (p *ISchema) CreateDatabase(dbname ...string) {
+	if dbname != nil && len(dbname[0]) > 0 {
+		p.Name = dbname[0]
+	}
+	if err := base.DB.Exec(fmt.Sprintf(GetCreateDatabase, p.Name)).Error; err != nil {
+		panic(err)
+	}
+	fmt.Printf("CreateDatabase comleted: %s\n", p.Name)
+}
+
+func (p *ISchema) Run() {
+	src := NewSchemaFromDB()
+	diff := p.Diff(src)
+	lines := strings.Split(diff, ";\n")
+	count := 0
+	for _, sql := range lines {
+		if len(sql) > 10 {
+			if err := base.DB.Exec(sql).Error; err != nil {
+				panic(err)
+			}
+			count++
+		}
+	}
+	fmt.Printf("Run comleted: %d sql\n", count)
+}
+
+func (p *ISchema) Model(output ...string) {
+	gopath := "./models/dump"
+	if len(output) > 0 && len(output[0]) > 0 {
+		gopath = output[0]
+	}
+
+	for _, table := range p.Tables {
+		table.CreateGoModel(gopath)
+	}
+	if err := exec.Command("go", "fmt", fmt.Sprintf("%s/...", gopath)).Run(); err != nil {
+		panic(err)
+	}
+	fmt.Printf("Model comleted: %d models\n", len(p.Tables))
+}
+
+func (p *ISchema) CreateSchema(output string) {
+	for _, table := range p.Tables {
+		filename := fmt.Sprintf("%s/%s.go", output, table.Name)
+		base.WriteFile(filename, table.CreateSchemaFile())
+	}
+	if err := exec.Command("go", "fmt", fmt.Sprintf("%s/...", output)).Run(); err != nil {
+		panic(err)
+	}
 }

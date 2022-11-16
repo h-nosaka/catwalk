@@ -1,0 +1,59 @@
+version: "3.9"
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-file: '1'
+    max-size: 1m
+x-golang: &go
+  golang:1.19
+x-mariadb: &mdb
+  mariadb:10.7
+x-postgres: &pdb
+  postgres:12.8-alpine
+
+services:
+  app:
+    build: .
+    command: tail -f /dev/null
+    env_file:
+      - .env
+    volumes:
+      - .:/opt/app
+    depends_on:
+      - mdb
+      - pdb
+    logging: *logging
+
+  mdb:
+    image: *mdb
+    environment:
+      MARIADB_ROOT_PASSWORD: q1w2e3r4
+      MARIADB_DATABASE: app
+      MARIADB_USER: docker
+      MARIADB_PASSWORD: q1w2e3r4
+      TZ: 'Asia/Tokyo'
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    volumes:
+    - mdb-data:/var/lib/mysql
+    ports:
+    - 3306:3306
+    logging: *logging
+
+  pdb:
+    image: *pdb
+    environment:
+      POSTGRES_USER: 'docker'
+      POSTGRES_PASSWORD: 'q1w2e3r4'
+      POSTGRES_DB: 'app'
+      TZ: 'Asia/Tokyo'
+    command: postgres -c log_statement=all
+    volumes:
+      - pdb-data:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    logging: *logging
+
+volumes:
+  mdb-data:
+  pdb-data:

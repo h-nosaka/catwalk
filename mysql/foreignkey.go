@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/freebitdx/fbfiber/context"
 	"github.com/gertd/go-pluralize"
+	"github.com/h-nosaka/catwalk/base"
 	"github.com/iancoleman/strcase"
 )
 
@@ -16,6 +16,13 @@ type IForeignkey struct {
 	RefColumn string `gorm:"column:REFERENCED_COLUMN_NAME"`
 	HasOne    bool   `gorm:"->:false"`
 	HasAny    bool   `gorm:"->:false"`
+}
+
+type IRelation struct {
+	Column    string
+	RefTable  string
+	RefColumn string
+	HasOne    bool
 }
 
 func NewFK(name string, column string, reftable string, refcolumn string, hasone bool, any bool) IForeignkey {
@@ -65,8 +72,8 @@ func (p IForeignkey) Diff(table *ITable, diff *ITable) string {
 	if dest.Name == "" {
 		buf.WriteString(p.Create(table))
 	} else if p.Create(table) != dest.Create(diff) {
-		context.Ctx.Logger.Debug(p.Create(table))
-		context.Ctx.Logger.Debug(dest.Create(diff))
+		base.Log.Debug(p.Create(table))
+		base.Log.Debug(dest.Create(diff))
 		buf.WriteString(dest.Drop(diff))
 		buf.WriteString(p.Create(table))
 	}
@@ -89,11 +96,19 @@ func (p *IForeignkey) GetRelation() string {
 	return fmt.Sprintf("%s *%s", model, model)
 }
 
-func (p *IForeignkey) GetDartRelation() string {
+func (p *IRelation) GetReference(t *ITable) string {
+	con := pluralize.NewClient()
+	if !p.HasOne && strcase.ToCamel(p.Column) == "Id" && p.RefColumn == fmt.Sprintf("%s_id", con.Singular(t.Name)) {
+		return fmt.Sprintf("foreignKey:%s", strcase.ToCamel(p.Column))
+	}
+	return fmt.Sprintf("foreignKey:%s;references:%s", strcase.ToCamel(p.Column), strcase.ToCamel(p.RefColumn))
+}
+
+func (p *IRelation) GetRelation() string {
 	con := pluralize.NewClient()
 	model := strcase.ToCamel(con.Singular(p.RefTable))
-	if p.HasOne {
-		return fmt.Sprintf("late List<%s>? %s;", model, strcase.ToLowerCamel(p.RefTable))
+	if !p.HasOne {
+		return fmt.Sprintf("%s []%s", strcase.ToCamel(p.RefTable), model)
 	}
-	return fmt.Sprintf("late %s? %s;", model, strcase.ToLowerCamel(con.Singular(p.RefTable)))
+	return fmt.Sprintf("%s *%s", model, model)
 }

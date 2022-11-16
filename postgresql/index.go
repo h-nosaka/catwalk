@@ -5,44 +5,52 @@ import (
 	"fmt"
 	"strings"
 
-	"gorm.io/gorm"
+	"github.com/h-nosaka/catwalk/base"
 )
 
-type PGIndex struct {
-	Schemaname     string
-	Tablename      string
-	Indexname      string
+type IIndex struct {
+	Name           string   `gorm:"column:indexname"`
 	ConstraintType *string  `yaml:"constraint_type,omitempty"`
 	Columns        []string `gorm:"->:false"`
 }
 
-func (p *PGIndex) GetColumn(db *gorm.DB) {
-	db.Raw(`
-		SELECT pg_attribute.attname
-			FROM pg_catalog.pg_attribute
-			LEFT JOIN pg_catalog.pg_class ON pg_attribute.attrelid = pg_class.oid
-			WHERE pg_class.relname = ?
-			ORDER BY pg_attribute.attnum;
-	`, p.Indexname).Scan(&p.Columns)
+func NewIndex(name string, constraint *string, columns ...string) IIndex {
+	return IIndex{
+		Name:           name,
+		ConstraintType: constraint,
+		Columns:        columns,
+	}
 }
 
-func (p *PGIndex) Create() string {
+func DefaultIndex(name string, indexes ...IIndex) []IIndex {
+	rs := []IIndex{
+		NewIndex(name, base.String("PRIMARY KEY"), "id"),
+	}
+	rs = append(rs, indexes...)
+	return rs
+}
+
+func (p *IIndex) GetColumn() {
+	base.DB.Raw(GetIndexColumn, p.Name).Scan(&p.Columns)
+}
+
+func (p *IIndex) Create(t *ITable) string {
 	if p.ConstraintType != nil {
 		switch *p.ConstraintType {
 		case "PRIMARY KEY":
 			return fmt.Sprintf(
 				"ALTER TABLE %s.%s ADD CONSTRAINT %s PRIMARY KEY (%s);\n\n",
-				p.Schemaname,
-				p.Tablename,
-				p.Indexname,
+				t.Schema,
+				t.Name,
+				p.Name,
 				strings.Join(p.Columns, ","),
 			)
 		case "UNIQUE":
 			return fmt.Sprintf(
 				"ALTER TABLE %s.%s ADD CONSTRAINT %s UNIQUE (%s);\n\n",
-				p.Schemaname,
-				p.Tablename,
-				p.Indexname,
+				t.Schema,
+				t.Name,
+				p.Name,
 				strings.Join(p.Columns, ","),
 			)
 		default:
@@ -51,29 +59,29 @@ func (p *PGIndex) Create() string {
 	}
 	return fmt.Sprintf(
 		"CREATE INDEX %s ON %s.%s (%s);\n\n",
-		p.Indexname,
-		p.Schemaname,
-		p.Tablename,
+		p.Name,
+		t.Schema,
+		t.Name,
 		strings.Join(p.Columns, ","),
 	)
 }
 
-func (p *PGIndex) Drop() string {
+func (p *IIndex) Drop(t *ITable) string {
 	if p.ConstraintType != nil {
 		switch *p.ConstraintType {
 		case "PRIMARY KEY":
 			return fmt.Sprintf(
 				"ALTER TABLE %s.%s DROP CONSTRAINT %s;\n",
-				p.Schemaname,
-				p.Tablename,
-				p.Indexname,
+				t.Schema,
+				t.Name,
+				p.Name,
 			)
 		case "UNIQUE":
 			return fmt.Sprintf(
 				"ALTER TABLE %s.%s DROP CONSTRAINT %s;\n",
-				p.Schemaname,
-				p.Tablename,
-				p.Indexname,
+				t.Schema,
+				t.Name,
+				p.Name,
 			)
 		default:
 			panic(fmt.Sprintf("unknown constraint_type: %s", *p.ConstraintType))
@@ -81,24 +89,24 @@ func (p *PGIndex) Drop() string {
 	}
 	return fmt.Sprintf(
 		"DROP INDEX IF EXISTS %s.%s RESTRICT;\n",
-		p.Schemaname,
-		p.Indexname,
+		t.Schema,
+		p.Name,
 	)
 }
 
-func (p PGIndex) Diff(src *[]PGIndex) string {
+func (p *IIndex) Diff(t *ITable, src *[]IIndex) string {
 	buf := bytes.NewBuffer([]byte{})
-	dest := PGIndex{}
+	dest := IIndex{}
 	for _, item := range *src {
-		if item.Indexname == p.Indexname {
+		if item.Name == p.Name {
 			dest = item
 		}
 	}
-	if dest.Indexname == "" {
-		buf.WriteString(p.Create())
-	} else if p.Create() != dest.Create() {
-		buf.WriteString(dest.Drop())
-		buf.WriteString(p.Create())
+	if dest.Name == "" {
+		buf.WriteString(p.Create(t))
+	} else if p.Create(t) != dest.Create(t) {
+		buf.WriteString(dest.Drop(t))
+		buf.WriteString(p.Create(t))
 	}
 	return buf.String()
 }

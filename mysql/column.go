@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/freebitdx/fbfiber/context"
+	"github.com/h-nosaka/catwalk/base"
+	"golang.org/x/exp/slices"
 )
 
 type IColumn struct {
@@ -37,7 +38,7 @@ func NewColumn(name string, dataType string, extra *string, defaults *string, nu
 
 func DefaultColumn(cols ...IColumn) []IColumn {
 	rs := []IColumn{
-		NewColumn("id", "bigint(20) unsigned", context.String("auto_increment"), nil, context.Bool(false), context.String("primary key"), nil),
+		NewColumn("id", "bigint(20) unsigned", base.String("auto_increment"), nil, base.Bool(false), base.String("primary key"), nil),
 	}
 	rs = append(rs, cols...)
 	rs = append(
@@ -49,8 +50,8 @@ func DefaultColumn(cols ...IColumn) []IColumn {
 
 func TimestampColumn() []IColumn {
 	return []IColumn{
-		NewColumn("created_at", "timestamp", nil, context.String("CURRENT_TIMESTAMP"), nil, context.String("作成日"), nil),
-		NewColumn("updated_at", "timestamp", nil, context.String("CURRENT_TIMESTAMP"), nil, context.String("更新日"), nil),
+		NewColumn("created_at", "timestamp", nil, base.String("CURRENT_TIMESTAMP"), nil, base.String("作成日"), nil),
+		NewColumn("updated_at", "timestamp", nil, base.String("CURRENT_TIMESTAMP"), nil, base.String("更新日"), nil),
 	}
 }
 
@@ -211,7 +212,7 @@ func (p *IColumn) GetGoTag(table *ITable) string {
 	ok := false
 	for _, index := range table.Indexes {
 		if index.Name == "PRIMARY KEY" {
-			if !context.ArrayInclude(index.Columns, p.Name) {
+			if !slices.Contains(index.Columns, p.Name) {
 				ok = true
 			}
 		}

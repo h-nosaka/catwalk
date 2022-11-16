@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"gorm.io/gorm"
+	"github.com/h-nosaka/catwalk/base"
 )
 
 type IIndex struct {
@@ -35,8 +35,8 @@ func DefaultIndex(indexes ...IIndex) []IIndex {
 	return rs
 }
 
-func (p *IIndex) GetColumn(db *gorm.DB, table *ITable) {
-	db.Raw(fmt.Sprintf(GetIndexColumn, table.Schema, table.Name, p.Name)).Scan(&p.Columns)
+func (p *IIndex) GetColumn(table *ITable) {
+	base.DB.Raw(fmt.Sprintf(GetIndexColumn, table.Schema, table.Name, p.Name)).Scan(&p.Columns)
 }
 
 func (p *IIndex) Append() string {

@@ -5,8 +5,7 @@ import (
 	"fmt"
 )
 
-type PGSequence struct {
-	Schemaname    string
+type ISequence struct {
 	Sequencename  string
 	Sequenceowner string
 	StartValue    int
@@ -15,24 +14,35 @@ type PGSequence struct {
 	IncrementBy   int
 }
 
-func (p *PGSequence) GetMin() string {
+func NewSeq(name string, owner string, start int, min int, max int, inc int) ISequence {
+	return ISequence{
+		Sequencename:  name,
+		Sequenceowner: owner,
+		StartValue:    start,
+		MinValue:      min,
+		MaxValue:      max,
+		IncrementBy:   inc,
+	}
+}
+
+func (p *ISequence) GetMin() string {
 	if p.MinValue == 1 {
 		return "NO MINVALUE"
 	}
 	return fmt.Sprintf("MINVALUE %d", p.MinValue)
 }
 
-func (p *PGSequence) GetMax() string {
+func (p *ISequence) GetMax() string {
 	if p.MaxValue == 9223372036854775807 {
 		return "NO MAXVALUE"
 	}
 	return fmt.Sprintf("MAXVALUE %d", p.MaxValue)
 }
 
-func (p *PGSequence) Create() string {
+func (p *ISequence) Create(t *ITable) string {
 	return fmt.Sprintf(
 		"CREATE SEQUENCE %s.%s START WITH %d INCREMENT BY %d %s %s CACHE 1;\n\n",
-		p.Schemaname,
+		t.Schema,
 		p.Sequencename,
 		p.StartValue,
 		p.IncrementBy,
@@ -41,27 +51,27 @@ func (p *PGSequence) Create() string {
 	)
 }
 
-func (p *PGSequence) Drop() string {
+func (p *ISequence) Drop(t *ITable) string {
 	return fmt.Sprintf(
 		"DROP SEQUENCE %s.%s;\n",
-		p.Schemaname,
+		t.Schema,
 		p.Sequencename,
 	)
 }
 
-func (p PGSequence) Diff(src *[]PGSequence) string {
+func (p *ISequence) Diff(t *ITable, src *[]ISequence) string {
 	buf := bytes.NewBuffer([]byte{})
-	dest := PGSequence{}
+	dest := ISequence{}
 	for _, item := range *src {
 		if item.Sequencename == p.Sequencename {
 			dest = item
 		}
 	}
 	if dest.Sequencename == "" {
-		buf.WriteString(p.Create())
-	} else if p.Create() != dest.Create() {
-		buf.WriteString(dest.Drop())
-		buf.WriteString(p.Create())
+		buf.WriteString(p.Create(t))
+	} else if p.Create(t) != dest.Create(t) {
+		buf.WriteString(dest.Drop(t))
+		buf.WriteString(p.Create(t))
 	}
 	return buf.String()
 }

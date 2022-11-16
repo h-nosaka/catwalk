@@ -3,7 +3,7 @@ package postgresql
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 
 	"github.com/gertd/go-pluralize"
@@ -43,7 +43,7 @@ func (p Mappings) Load(filename string) *Mappings {
 	if err != nil {
 		panic(err)
 	}
-	data, err := ioutil.ReadAll(fp)
+	data, err := io.ReadAll(fp)
 	if err != nil {
 		panic(err)
 	}
