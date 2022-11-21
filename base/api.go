@@ -165,3 +165,11 @@ func RequestParser(f *fiber.Ctx, request interface{}) interface{} {
 	}
 	return nil
 }
+
+func ErrorHandler(c *fiber.Ctx, err error) error {
+	code := fiber.StatusInternalServerError
+	if e, ok := err.(*fiber.Error); ok {
+		code = e.Code
+	}
+	return ErrorCodeApi(c, code, err)
+}
