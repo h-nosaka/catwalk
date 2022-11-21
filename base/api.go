@@ -143,26 +143,16 @@ func ValidateError(err error) ([]Error, error) {
 	return nil, err
 }
 
-func RequestParser(f *fiber.Ctx, request interface{}) error {
+func RequestParser(f *fiber.Ctx, request interface{}) interface{} {
 	Log.Info(fmt.Sprintf("uri: %s, body: %s", f.Request().RequestURI(), f.Request().Body()), zap.String("request_id", f.Locals("requestid").(string)))
 	if string(f.Request().Header.Method()) == fasthttp.MethodGet {
 		if err := f.QueryParser(request); err != nil {
 			Log.Error("request error: " + err.Error())
-			if err := ApiResult(f, 400, ErrorResponse{
-				Message: err.Error(),
-			}); err != nil {
-				return err
-			}
 			return err
 		}
 	} else {
 		if err := f.BodyParser(request); err != nil {
 			Log.Error(fmt.Sprintf("request error: %s", err.Error()), zap.String("request_id", f.Locals("requestid").(string)))
-			if err := ApiResult(f, 400, ErrorResponse{
-				Message: err.Error(),
-			}); err != nil {
-				return err
-			}
 			return err
 		}
 	}
@@ -170,13 +160,7 @@ func RequestParser(f *fiber.Ctx, request interface{}) error {
 	if result != nil {
 		if errors, err := ValidateError(result.(validator.ValidationErrors)); err != nil {
 			Log.Error(fmt.Sprintf("validation error: %s", err.Error()), zap.String("request_id", f.Locals("requestid").(string)))
-			if err := ApiResult(f, 400, ErrorResponse{
-				Message: "validation error",
-				Errors:  &errors,
-			}); err != nil {
-				return err
-			}
-			return err
+			return errors
 		}
 	}
 	return nil
