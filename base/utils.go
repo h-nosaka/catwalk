@@ -1,6 +1,9 @@
 package base
 
 import (
+	"bytes"
+	"encoding/json"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -47,13 +50,33 @@ func Bool(src bool) *bool {
 	return &src
 }
 
-func WriteFile(filename string, data []byte) {
-	fp, err := os.Create(filename)
+func ReadBuffer(r io.Reader) string {
+	var b bytes.Buffer
+	if _, err := b.ReadFrom(r); err != nil {
+		return ""
+	}
+	return b.String()
+}
+
+func ToJson(src interface{}, def string, pretty ...bool) string {
+	var rs []byte
+	var err error
+	if pretty != nil && len(pretty) > 0 {
+		rs, err = json.MarshalIndent(src, "", "\t")
+	} else {
+		rs, err = json.Marshal(src)
+	}
 	if err != nil {
-		panic(err)
+		return def
 	}
-	defer fp.Close()
-	if _, err := fp.Write(data); err != nil {
-		panic(err)
+	return string(rs)
+}
+
+func ReJson(src string) string {
+	var data interface{}
+	if err := json.Unmarshal([]byte(src), &data); err != nil {
+		Log.Error(err.Error())
+		return src
 	}
+	return ToJson(data, src, true)
 }
