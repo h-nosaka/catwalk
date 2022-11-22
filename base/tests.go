@@ -35,16 +35,22 @@ func It(t *testing.T, it string) {
 	t.Logf("%s:%d: %s", file, line, it)
 }
 
-func CreateApiTest(t *testing.T, it string, routes func(*fiber.App)) *apitest.APITest {
+func CreateMethodTest(t *testing.T, it string, test func()) {
+	It(t, it)
+	test()
+}
+
+func CreateApiTest(t *testing.T, it string, routes func(*fiber.App), test func(*apitest.APITest)) {
 	It(t, it)
 	app := fiber.New(fiber.Config{
 		ErrorHandler: ErrorHandler,
 	})
 	routes(app)
-	// デバグ表示するならこちら
-	// return apitest.New().Debug().HandlerFunc(FiberToHandlerFunc(app))
-	// CI上で動かすならこちら
-	return apitest.New().HandlerFunc(FiberToHandlerFunc(app))
+	api := apitest.New()
+	if GetEnvBool("DEBUG", false) {
+		api = api.Debug()
+	}
+	test(api.HandlerFunc(FiberToHandlerFunc(app)))
 }
 
 const MessageEqaul = "%s:%d: got: %v, want: %v"
