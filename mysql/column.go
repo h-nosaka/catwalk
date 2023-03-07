@@ -158,7 +158,7 @@ func (p *IColumn) IsDrop(table *ITable) string {
 func (p IColumn) Diff(table *ITable, diff *ITable) string {
 	buf := bytes.NewBuffer([]byte{})
 	dest := IColumn{}
-	for _, item := range table.Columns {
+	for _, item := range diff.Columns {
 		if item.Name == p.Name {
 			dest = item
 		}
