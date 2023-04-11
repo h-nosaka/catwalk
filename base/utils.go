@@ -61,7 +61,7 @@ func ReadBuffer(r io.Reader) string {
 func ToJson(src interface{}, def string, pretty ...bool) string {
 	var rs []byte
 	var err error
-	if pretty != nil && len(pretty) > 0 && pretty[0] {
+	if len(pretty) > 0 && pretty[0] {
 		rs, err = json.MarshalIndent(src, "", "\t")
 	} else {
 		rs, err = json.Marshal(src)

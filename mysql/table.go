@@ -25,6 +25,16 @@ type ITable struct {
 	Enums       []IEnum       `gorm:"->:false"`
 	Methods     []IMethod     `gorm:"->:false"`
 	Relations   []IRelation   `gorm:"->:false"`
+	Partitions  *IPartition   `gorm:"->:false"`
+}
+
+type IPartition struct {
+	Type   string
+	Column string
+	Keys   []struct {
+		Key   string
+		Value string
+	}
 }
 
 func (p *ITable) GetColumn() {
@@ -90,6 +100,9 @@ func (p *ITable) Create() string {
 	for _, item := range p.Foreignkeys {
 		buf.WriteString(item.Create(p))
 	}
+	if p.Partitions != nil {
+		buf.WriteString(p.Partitions.Create(p.Name))
+	}
 	return buf.String()
 }
 
@@ -136,6 +149,10 @@ func (p ITable) Diff(src *[]ITable) string {
 		for _, key := range p.Foreignkeys {
 			buf.WriteString(key.Diff(&p, &dest))
 		}
+		// パーティション
+		if p.Partitions != nil {
+			buf.WriteString(p.Partitions.Diff(p.Name, dest.Partitions))
+		}
 		// カラムのリネーム
 		for _, col := range p.Columns {
 			if col.Rename != nil && col.Name != *col.Rename {
@@ -147,6 +164,69 @@ func (p ITable) Diff(src *[]ITable) string {
 	if p.Rename != nil && p.Name != *p.Rename {
 		buf.WriteString(p.RenameTable())
 	}
+	return buf.String()
+}
+
+func (p *IPartition) Create(table string) string {
+	buf := bytes.NewBuffer([]byte{})
+	buf.WriteString(fmt.Sprintf("ALTER TABLE %s PARTITION BY %s %s (\n", table, p.Type, p.Column))
+	for _, item := range p.Keys {
+		switch p.Type {
+		case "RANGE":
+			buf.WriteString(fmt.Sprintf("\tPARTITION %s VALUES LESS THAN (%s),\n", item.Key, item.Value))
+		case "LIST":
+			buf.WriteString(fmt.Sprintf("\tPARTITION %s VALUES IN (%s),\n", item.Key, item.Value))
+		}
+	}
+	buf.WriteString(");\n\n")
+	return buf.String()
+}
+
+func (p *IPartition) Diff(table string, src *IPartition) string {
+	buf := bytes.NewBuffer([]byte{})
+	// 新規パーティションテーブルの場合
+	if p != nil && src == nil {
+		buf.WriteString(p.Create(table))
+		return buf.String()
+	}
+	// パーティション全体削除の場合
+	if p == nil && src != nil {
+		buf.WriteString(fmt.Sprintf("ALTER TABLE %s REMOVE PARTITIONING;\n\n", table))
+		return buf.String()
+	}
+	// パーティション追加
+	for _, item := range p.Keys {
+		ok := false
+		for _, dest := range src.Keys {
+			if item.Key == dest.Key {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			switch p.Type {
+			case "RANGE":
+				buf.WriteString(fmt.Sprintf("ALTER TABLE %s ADD PARTITION (PARTITION %s VALUES LESS THAN (%s));\n", table, item.Key, item.Value))
+			case "LIST":
+				buf.WriteString(fmt.Sprintf("ALTER TABLE %s ADD PARTITION (PARTITION %s VALUES IN (%s));\n", table, item.Key, item.Value))
+			}
+		}
+	}
+	// パーティション削除
+	for _, dest := range src.Keys {
+		ok := false
+		for _, item := range p.Keys {
+			if dest.Key == item.Key {
+				ok = true
+				break
+			}
+		}
+		if !ok {
+			buf.WriteString(fmt.Sprintf("ALTER TABLE %s TRUNCATE PARTITION %s;\n", table, dest.Key)) // パーティションの中身をクリアする
+			buf.WriteString(fmt.Sprintf("ALTER TABLE %s DROP PARTITION %s;\n", table, dest.Key))
+		}
+	}
+	buf.WriteString("\n")
 	return buf.String()
 }
 

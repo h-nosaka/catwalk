@@ -36,8 +36,8 @@ services:
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
     - mdb-data:/var/lib/mysql
-    ports:
-    - 3306:3306
+    # ports:
+    # - 3306:3306
     logging: *logging
 
   pdb:
@@ -50,8 +50,8 @@ services:
     command: postgres -c log_statement=all
     volumes:
       - pdb-data:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
+    # ports:
+    #   - 5432:5432
     logging: *logging
 
 volumes:

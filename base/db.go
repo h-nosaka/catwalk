@@ -47,10 +47,10 @@ func Init() {
 	var err error
 	switch DBType {
 	case "mysql":
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPassword, dbHost, DBName)
+		dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPassword, dbHost, DBName)
 		db, err = gorm.Open(mysql.Open(dsn), config)
 		if err != nil {
-			dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPassword, dbHost)
+			dsn := fmt.Sprintf("%s:%s@tcp(%s)/?charset=utf8mb4&parseTime=True&loc=Local", dbUser, dbPassword, dbHost)
 			db, err = gorm.Open(mysql.Open(dsn), config)
 		}
 	case "postgres":
