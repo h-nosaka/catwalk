@@ -31,10 +31,12 @@ type ITable struct {
 type IPartition struct {
 	Type   string
 	Column string
-	Keys   []struct {
-		Key   string
-		Value string
-	}
+	Keys   []IPartitionKey
+}
+
+type IPartitionKey struct {
+	Key   string
+	Value string
 }
 
 func (p *ITable) GetColumn() {
