@@ -45,6 +45,7 @@ func NewSchemaFromDB() *ISchema {
 		table.GetColumn()
 		table.GetIndexes()
 		table.GetForeignkeys()
+		table.GetPartitions()
 		rs.Tables = append(rs.Tables, table)
 	}
 	return &rs

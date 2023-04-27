@@ -73,6 +73,21 @@ func (p *ITable) GetForeignkeys() {
 	base.DB.Raw(fmt.Sprintf(GetForeignkeys, p.Schema, p.Name)).Scan(&p.Foreignkeys)
 }
 
+func (p *ITable) GetPartitions() {
+	rs := []map[string]interface{}{}
+	base.DB.Raw(fmt.Sprintf(GetPartitions, p.Schema, p.Name)).Scan(&rs)
+	if len(rs) > 0 && rs[0]["PARTITION_METHOD"] != nil {
+		p.Partitions = &IPartition{
+			Type:   rs[0]["PARTITION_METHOD"].(string),
+			Column: rs[0]["PARTITION_EXPRESSION"].(string),
+			Keys:   []IPartitionKey{},
+		}
+		for _, item := range rs {
+			p.Partitions.Keys = append(p.Partitions.Keys, IPartitionKey{Key: item["PARTITION_NAME"].(string), Value: item["PARTITION_DESCRIPTION"].(string)})
+		}
+	}
+}
+
 func (p *ITable) Create() string {
 	if p.IsDB != nil && !*p.IsDB {
 		return ""
@@ -172,15 +187,17 @@ func (p ITable) Diff(src *[]ITable) string {
 func (p *IPartition) Create(table string) string {
 	buf := bytes.NewBuffer([]byte{})
 	buf.WriteString(fmt.Sprintf("ALTER TABLE %s PARTITION BY %s %s (\n", table, p.Type, p.Column))
+	parts := []string{}
 	for _, item := range p.Keys {
 		switch p.Type {
 		case "RANGE":
-			buf.WriteString(fmt.Sprintf("\tPARTITION %s VALUES LESS THAN (%s),\n", item.Key, item.Value))
+			parts = append(append, fmt.Sprintf("\tPARTITION %s VALUES LESS THAN (%s)", item.Key, item.Value))
 		case "LIST":
-			buf.WriteString(fmt.Sprintf("\tPARTITION %s VALUES IN (%s),\n", item.Key, item.Value))
+			parts = append(append, fmt.Sprintf("\tPARTITION %s VALUES IN (%s),\n", item.Key, item.Value))
 		}
 	}
-	buf.WriteString(");\n\n")
+	buf.WriteString(strings.Join(parts, ",\n"))
+	buf.WriteString("\n);\n\n")
 	return buf.String()
 }
 
