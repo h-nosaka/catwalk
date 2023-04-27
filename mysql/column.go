@@ -50,8 +50,8 @@ func DefaultColumn(cols ...IColumn) []IColumn {
 
 func TimestampColumn() []IColumn {
 	return []IColumn{
-		NewColumn("created_at", "timestamp", nil, base.String("current_timestamp"), nil, base.String("作成日"), nil),
-		NewColumn("updated_at", "timestamp", nil, base.String("current_timestamp"), nil, base.String("更新日"), nil),
+		NewColumn("created_at", "timestamp", nil, base.String("current_timestamp()"), nil, base.String("作成日"), nil),
+		NewColumn("updated_at", "timestamp", nil, base.String("current_timestamp()"), nil, base.String("更新日"), nil),
 	}
 }
 
