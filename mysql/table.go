@@ -191,9 +191,9 @@ func (p *IPartition) Create(table string) string {
 	for _, item := range p.Keys {
 		switch p.Type {
 		case "RANGE":
-			parts = append(append, fmt.Sprintf("\tPARTITION %s VALUES LESS THAN (%s)", item.Key, item.Value))
+			parts = append(parts, fmt.Sprintf("\tPARTITION %s VALUES LESS THAN (%s)", item.Key, item.Value))
 		case "LIST":
-			parts = append(append, fmt.Sprintf("\tPARTITION %s VALUES IN (%s)", item.Key, item.Value))
+			parts = append(parts, fmt.Sprintf("\tPARTITION %s VALUES IN (%s)", item.Key, item.Value))
 		}
 	}
 	buf.WriteString(strings.Join(parts, ",\n"))
