@@ -10,7 +10,7 @@ x-golang: &go
 x-mariadb: &mdb
   mariadb:10.7
 x-postgres: &pdb
-  postgres:12.8-alpine
+  postgres:15
 
 services:
   app:
@@ -20,9 +20,6 @@ services:
       - .env
     volumes:
       - .:/opt/app
-    depends_on:
-      - mdb
-      - pdb
     logging: *logging
 
   mdb:
@@ -50,8 +47,8 @@ services:
     command: postgres -c log_statement=all
     volumes:
       - pdb-data:/var/lib/postgresql/data
-    # ports:
-    #   - 5432:5432
+    ports:
+      - 5432:5432
     logging: *logging
 
 volumes:

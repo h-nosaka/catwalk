@@ -60,16 +60,12 @@ func TimestampColumn() []IColumn {
 
 func (p *IColumn) GetColumnType() string {
 	switch p.DataType {
+	case "int2":
+		return "int2"
 	case "int4":
-		if p.NumMax > 0 && p.NumMax < 32 {
-			return fmt.Sprintf("integer(%d)", p.NumMax)
-		}
-		return "integer"
+		return "int4"
 	case "int8":
-		if p.NumMax > 0 && p.NumMax < 64 {
-			return fmt.Sprintf("bigint(%d)", p.NumMax)
-		}
-		return "bigint"
+		return "int8"
 	case "varchar":
 		if p.CharaMax > 0 {
 			return fmt.Sprintf("character varying(%d)", p.CharaMax)
@@ -84,8 +80,6 @@ func (p *IColumn) GetColumnType() string {
 		return "timestamp without time zone"
 	case "bool":
 		return "boolean"
-	case "int2":
-		return "smallint"
 	case "_varchar":
 		return "varchar[]"
 	case "_int4":
@@ -125,8 +119,8 @@ func (p *IColumn) Append() string {
 
 func (p *IColumn) Create(t *ITable) string {
 	return fmt.Sprintf(
-		"ALTER TABLE %s.%s ADD COLUMN %s;\n\n",
-		t.Schema,
+		"ALTER TABLE %s%s ADD COLUMN %s;\n\n",
+		t.SchemaName(),
 		t.Name,
 		p.Append(),
 	)
@@ -134,8 +128,8 @@ func (p *IColumn) Create(t *ITable) string {
 
 func (p *IColumn) Drop(t *ITable) string {
 	return fmt.Sprintf(
-		"ALTER TABLE %s.%s DROP COLUMN %s;\n\n",
-		t.Schema,
+		"ALTER TABLE %s%s DROP COLUMN %s;\n\n",
+		t.SchemaName(),
 		t.Name,
 		p.Name,
 	)
@@ -144,8 +138,8 @@ func (p *IColumn) Drop(t *ITable) string {
 func (p *IColumn) Type(t *ITable) string {
 	if p.Using != nil {
 		return fmt.Sprintf(
-			"ALTER TABLE %s.%s ALTER COLUMN %s TYPE %s USING %s;\n\n",
-			t.Schema,
+			"ALTER TABLE %s%s ALTER COLUMN %s TYPE %s USING %s;\n\n",
+			t.SchemaName(),
 			t.Name,
 			p.Name,
 			p.GetColumnType(),
@@ -153,8 +147,8 @@ func (p *IColumn) Type(t *ITable) string {
 		)
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s.%s ALTER COLUMN %s TYPE %s;\n\n",
-		t.Schema,
+		"ALTER TABLE %s%s ALTER COLUMN %s TYPE %s;\n\n",
+		t.SchemaName(),
 		t.Name,
 		p.Name,
 		p.GetColumnType(),
@@ -167,8 +161,8 @@ func (p *IColumn) SetNullable(t *ITable) string {
 		value = "SET NOT NULL"
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s.%s ALTER COLUMN %s %s;\n\n",
-		t.Schema,
+		"ALTER TABLE %s%s ALTER COLUMN %s %s;\n\n",
+		t.SchemaName(),
 		t.Name,
 		p.Name,
 		value,
@@ -181,8 +175,8 @@ func (p *IColumn) SetDefault(t *ITable) string {
 		value = fmt.Sprintf("SET %s", p.GetDefault())
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s.%s ALTER COLUMN %s %s;\n\n",
-		t.Schema,
+		"ALTER TABLE %s%s ALTER COLUMN %s %s;\n\n",
+		t.SchemaName(),
 		t.Name,
 		p.Name,
 		value,
@@ -193,18 +187,18 @@ func (p *IColumn) SetComment(t *ITable) string {
 	if p.Comment == nil {
 		return ""
 	}
-	return fmt.Sprintf("COMMENT ON COLUMN %s.%s.%s IS '%s';\n\n", t.Schema, t.Name, p.Name, *p.Comment)
+	return fmt.Sprintf("COMMENT ON COLUMN %s%s.%s IS '%s';\n\n", t.SchemaName(), t.Name, p.Name, *p.Comment)
 }
 
 func (p *IColumn) DropComment(t *ITable) string {
-	return fmt.Sprintf("COMMENT ON COLUMN %s.%s.%s IS NULL;\n\n", t.Schema, t.Name, p.Name)
+	return fmt.Sprintf("COMMENT ON COLUMN %s%s.%s IS NULL;\n\n", t.SchemaName(), t.Name, p.Name)
 }
 
 func (p *IColumn) RenameColumn(t *ITable) string {
 	if p.Rename != nil {
 		return fmt.Sprintf(
-			"ALTER TABLE %s.%s RENAME COLUMN %s TO %s;\n",
-			t.Schema,
+			"ALTER TABLE %s%s RENAME COLUMN %s TO %s;\n",
+			t.SchemaName(),
 			t.Name,
 			p.Name,
 			*p.Rename,

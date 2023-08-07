@@ -6,22 +6,20 @@ import (
 )
 
 type ISequence struct {
-	Sequencename  string
-	Sequenceowner string
-	StartValue    int
-	MinValue      int
-	MaxValue      int
-	IncrementBy   int
+	Sequencename string
+	StartValue   int
+	MinValue     int
+	MaxValue     int
+	IncrementBy  int
 }
 
-func NewSeq(name string, owner string, start int, min int, max int, inc int) ISequence {
+func NewSeq(name string, start int, min int, max int, inc int) ISequence {
 	return ISequence{
-		Sequencename:  name,
-		Sequenceowner: owner,
-		StartValue:    start,
-		MinValue:      min,
-		MaxValue:      max,
-		IncrementBy:   inc,
+		Sequencename: name,
+		StartValue:   start,
+		MinValue:     min,
+		MaxValue:     max,
+		IncrementBy:  inc,
 	}
 }
 
@@ -41,8 +39,8 @@ func (p *ISequence) GetMax() string {
 
 func (p *ISequence) Create(t *ITable) string {
 	return fmt.Sprintf(
-		"CREATE SEQUENCE %s.%s START WITH %d INCREMENT BY %d %s %s CACHE 1;\n\n",
-		t.Schema,
+		"CREATE SEQUENCE %s%s START WITH %d INCREMENT BY %d %s %s CACHE 1;\n\n",
+		t.SchemaName(),
 		p.Sequencename,
 		p.StartValue,
 		p.IncrementBy,
@@ -53,8 +51,8 @@ func (p *ISequence) Create(t *ITable) string {
 
 func (p *ISequence) Drop(t *ITable) string {
 	return fmt.Sprintf(
-		"DROP SEQUENCE %s.%s;\n",
-		t.Schema,
+		"DROP SEQUENCE %s%s;\n",
+		t.SchemaName(),
 		p.Sequencename,
 	)
 }

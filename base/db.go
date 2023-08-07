@@ -2,6 +2,7 @@ package base
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"go.uber.org/zap"
@@ -54,10 +55,11 @@ func Init() {
 			db, err = gorm.Open(mysql.Open(dsn), config)
 		}
 	case "postgres":
-		dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s sslmode=disable", dbUser, dbPassword, DBName, dbHost)
+		host := strings.Split(dbHost, ":")
+		dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", dbUser, dbPassword, DBName, host[0], host[1])
 		db, err = gorm.Open(postgres.Open(dsn), config)
 		if err != nil {
-			dsn := fmt.Sprintf("user=%s password=%s host=%s sslmode=disable", dbUser, dbPassword, dbHost)
+			dsn := fmt.Sprintf("user=%s password=%s host=%s port=%s sslmode=disable", dbUser, dbPassword, host[0], host[1])
 			db, err = gorm.Open(postgres.Open(dsn), config)
 		}
 	default:

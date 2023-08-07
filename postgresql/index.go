@@ -39,16 +39,16 @@ func (p *IIndex) Create(t *ITable) string {
 		switch *p.ConstraintType {
 		case "PRIMARY KEY":
 			return fmt.Sprintf(
-				"ALTER TABLE %s.%s ADD CONSTRAINT %s PRIMARY KEY (%s);\n\n",
-				t.Schema,
+				"ALTER TABLE %s%s ADD CONSTRAINT %s PRIMARY KEY (%s);\n\n",
+				t.SchemaName(),
 				t.Name,
 				p.Name,
 				strings.Join(p.Columns, ","),
 			)
 		case "UNIQUE":
 			return fmt.Sprintf(
-				"ALTER TABLE %s.%s ADD CONSTRAINT %s UNIQUE (%s);\n\n",
-				t.Schema,
+				"ALTER TABLE %s%s ADD CONSTRAINT %s UNIQUE (%s);\n\n",
+				t.SchemaName(),
 				t.Name,
 				p.Name,
 				strings.Join(p.Columns, ","),
@@ -58,9 +58,9 @@ func (p *IIndex) Create(t *ITable) string {
 		}
 	}
 	return fmt.Sprintf(
-		"CREATE INDEX %s ON %s.%s (%s);\n\n",
+		"CREATE INDEX %s ON %s%s (%s);\n\n",
 		p.Name,
-		t.Schema,
+		t.SchemaName(),
 		t.Name,
 		strings.Join(p.Columns, ","),
 	)
@@ -71,15 +71,15 @@ func (p *IIndex) Drop(t *ITable) string {
 		switch *p.ConstraintType {
 		case "PRIMARY KEY":
 			return fmt.Sprintf(
-				"ALTER TABLE %s.%s DROP CONSTRAINT %s;\n",
-				t.Schema,
+				"ALTER TABLE %s%s DROP CONSTRAINT %s;\n",
+				t.SchemaName(),
 				t.Name,
 				p.Name,
 			)
 		case "UNIQUE":
 			return fmt.Sprintf(
-				"ALTER TABLE %s.%s DROP CONSTRAINT %s;\n",
-				t.Schema,
+				"ALTER TABLE %s%s DROP CONSTRAINT %s;\n",
+				t.SchemaName(),
 				t.Name,
 				p.Name,
 			)
@@ -88,8 +88,8 @@ func (p *IIndex) Drop(t *ITable) string {
 		}
 	}
 	return fmt.Sprintf(
-		"DROP INDEX IF EXISTS %s.%s RESTRICT;\n",
-		t.Schema,
+		"DROP INDEX IF EXISTS %s%s RESTRICT;\n",
+		t.SchemaName(),
 		p.Name,
 	)
 }

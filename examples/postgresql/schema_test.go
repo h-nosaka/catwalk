@@ -1,20 +1,31 @@
 package schema
 
 import (
+	"os"
 	"os/exec"
 	"testing"
 
 	"github.com/h-nosaka/catwalk/base"
-	mdb "github.com/h-nosaka/catwalk/mysql"
+	db "github.com/h-nosaka/catwalk/postgresql"
 )
 
+func SetEnv() {
+	os.Setenv("RDB_TYPE", os.Getenv("PRDB_TYPE"))
+	os.Setenv("RDB_USER", os.Getenv("PRDB_USER"))
+	os.Setenv("RDB_PASSWORD", os.Getenv("PRDB_PASSWORD"))
+	os.Setenv("RDB_HOST", os.Getenv("PRDB_HOST"))
+	os.Setenv("RDB_DATABASE", os.Getenv("PRDB_DATABASE"))
+}
+
 func TestDump(t *testing.T) {
+	SetEnv()
 	base.Init()
 	Schema().Sql("./dump/dump.sql")
-	mdb.NewSchemaFromDB().Sql("./dump/db.sql")
+	db.NewSchemaFromDB().Sql("./dump/db.sql")
 }
 
 func TestModel(t *testing.T) {
+	SetEnv()
 	base.Init()
 	schema := Schema()
 	for _, table := range schema.Tables {
@@ -26,24 +37,28 @@ func TestModel(t *testing.T) {
 }
 
 func TestCreateDatabase(t *testing.T) {
+	SetEnv()
 	base.Init()
 	Schema().CreateDatabase()
 }
 
 func TestDiff(t *testing.T) {
+	SetEnv()
 	base.Init()
-	src := mdb.NewSchemaFromDB()
+	src := db.NewSchemaFromDB()
 	diff := Schema().Diff(src)
 	t.Log(diff)
 }
 
 func TestRun(t *testing.T) {
+	SetEnv()
 	base.Init()
 	Schema().Run()
 }
 
 func TestSchema(t *testing.T) {
+	SetEnv()
 	base.Init()
-	src := mdb.NewSchemaFromDB()
+	src := db.NewSchemaFromDB()
 	src.CreateSchema("./dump")
 }

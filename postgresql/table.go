@@ -22,6 +22,7 @@ type ITable struct {
 	Schema      string        `gorm:"column:schemaname"`
 	Name        string        `gorm:"column:tablename"`
 	IsDB        *bool         `gorm:"->:false" yaml:"is_db,omitempty"`
+	UseSchema   *bool         `gorm:"->:false"`
 	Comment     *string       `gorm:"column:comment" yaml:"comment,omitempty"`
 	Rename      *string       `gorm:"->:false" yaml:"rename,omitempty"`
 	Columns     []IColumn     `gorm:"->:false"`
@@ -93,12 +94,19 @@ func (p *ITable) GetForeignkeys() {
 	base.DB.Raw(GetForeignkeys, p.Name).Scan(&p.Foreignkeys)
 }
 
+func (p *ITable) SchemaName() string {
+	if p.UseSchema == nil || !*p.UseSchema {
+		return ""
+	}
+	return fmt.Sprintf("%s.", p.Schema)
+}
+
 func (p *ITable) Create() string {
 	buf := bytes.NewBuffer([]byte{})
 	for _, seq := range p.Sequences {
 		buf.WriteString(seq.Create(p))
 	}
-	buf.WriteString(fmt.Sprintf("CREATE TABLE %s.%s (\n", p.Schema, p.Name))
+	buf.WriteString(fmt.Sprintf("CREATE TABLE %s%s (\n", p.SchemaName(), p.Name))
 	for i, col := range p.Columns {
 		buf.WriteString(col.Append())
 		if i+1 < len(p.Columns) {
@@ -126,8 +134,8 @@ func (p *ITable) Create() string {
 
 func (p *ITable) Drop() string {
 	return fmt.Sprintf(
-		"DROP TABLE IF EXISTS %s.%s RESTRICT;\n",
-		p.Schema,
+		"DROP TABLE IF EXISTS %s%s RESTRICT;\n",
+		p.SchemaName(),
 		p.Name,
 	)
 }
@@ -136,18 +144,18 @@ func (p *ITable) SetComment() string {
 	if p.Comment == nil {
 		return ""
 	}
-	return fmt.Sprintf("COMMENT ON TABLE %s.%s IS '%s';\n\n", p.Schema, p.Name, *p.Comment)
+	return fmt.Sprintf("COMMENT ON TABLE %s%s IS '%s';\n\n", p.SchemaName(), p.Name, *p.Comment)
 }
 
 func (p *ITable) DropComment() string {
-	return fmt.Sprintf("COMMENT ON TABLE %s.%s IS NULL;\n\n", p.Schema, p.Name)
+	return fmt.Sprintf("COMMENT ON TABLE %s%s IS NULL;\n\n", p.SchemaName(), p.Name)
 }
 
 func (p *ITable) RenameTable() string {
 	if p.Rename != nil {
 		return fmt.Sprintf(
-			"ALTER TABLE %s.%s RENAME TO %s;\n",
-			p.Schema,
+			"ALTER TABLE %s%s RENAME TO %s;\n",
+			p.SchemaName(),
 			p.Name,
 			*p.Rename,
 		)
@@ -219,6 +227,12 @@ func (p *ITable) CreateGoModel(path string) {
 			imports = append(imports, *item.Imports...)
 		}
 	}
+	for _, item := range p.Enums {
+		if item.Type == EnumTypeUint && !slices.Contains(imports, `"encoding/json"`) {
+			imports = append(imports, `"encoding/json"`)
+		}
+	}
+
 	buf.WriteString(fmt.Sprintf("import (\n\t%s\n)\n\n", strings.Join(imports, "\n\t")))
 	// コメント処理
 	if p.Comment != nil {
@@ -367,8 +381,8 @@ import (
 	buf.WriteString("		},\n")
 	buf.WriteString("		Sequences: []db.ISequence{\n")
 	for _, seq := range p.Sequences {
-		buf.WriteString(fmt.Sprintf(`			db.NewSeq("%s", "%s", %d, %d, %d, %d),
-`, seq.Sequencename, seq.Sequenceowner, seq.StartValue, seq.MinValue, seq.MaxValue, seq.IncrementBy))
+		buf.WriteString(fmt.Sprintf(`			db.NewSeq("%s", %d, %d, %d, %d),
+`, seq.Sequencename, seq.StartValue, seq.MinValue, seq.MaxValue, seq.IncrementBy))
 	}
 	buf.WriteString("		},\n")
 	buf.WriteString(`		Enums: []db.IEnum{},

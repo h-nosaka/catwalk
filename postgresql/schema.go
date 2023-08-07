@@ -119,7 +119,9 @@ func (p *ISchema) Run() {
 				continue
 			}
 			if err := base.DB.Exec(sql).Error; err != nil {
-				panic(err)
+				fmt.Println(sql)
+				continue
+				// panic(err)
 			}
 			count++
 		}

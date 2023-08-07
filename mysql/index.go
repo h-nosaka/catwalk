@@ -73,7 +73,7 @@ func (p *IIndex) Create(table *ITable) string {
 			"CREATE UNIQUE INDEX %s USING BTREE ON %s (`%s`);\n\n",
 			p.Name,
 			table.Name,
-			strings.Join(p.Columns, ","),
+			strings.Join(p.Columns, "`,`"),
 		)
 	}
 	return fmt.Sprintf(

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/h-nosaka/catwalk/examples/models"
+	"github.com/h-nosaka/catwalk/examples/mysql/models"
 )
 
 func TestAccount(t *testing.T) {
