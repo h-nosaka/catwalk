@@ -297,7 +297,7 @@ func (p *ITable) CreateGoModel(path string) {
 		buf.WriteString("\tfor _, preload := range preloads {\n")
 		buf.WriteString("\t\ttx = tx.Preload(preload)\n")
 		buf.WriteString("\t}\n")
-		buf.WriteString("\tif err := tx.First(p).Error; err != nil {\n")
+		buf.WriteString("\tif err := tx.Where(p).First(p).Error; err != nil {\n")
 		buf.WriteString("\t\treturn err\n")
 		buf.WriteString("\t}\n")
 		buf.WriteString("\treturn nil\n")

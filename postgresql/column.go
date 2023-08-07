@@ -285,7 +285,7 @@ func (p *IColumn) GetGoTag(table *ITable) string {
 	ok := false
 	for _, index := range table.Indexes {
 		if index.ConstraintType != nil && *index.ConstraintType == "PRIMARY KEY" {
-			if !slices.Contains(index.Columns, p.Name) {
+			if slices.Contains(index.Columns, p.Name) {
 				ok = true
 			}
 		}
