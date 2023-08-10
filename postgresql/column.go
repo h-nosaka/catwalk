@@ -39,9 +39,9 @@ func NewColumn(name string, dataType string, charaMax int, numMax int, defaults 
 	}
 }
 
-func DefaultColumn(seq string, cols ...IColumn) []IColumn {
+func DefaultColumn(cols ...IColumn) []IColumn {
 	rs := []IColumn{
-		NewColumn("id", "int4", 0, 32, base.String(fmt.Sprintf("nextval('%s'::regclass)", seq)), base.Bool(false), base.String("primary key"), nil, nil),
+		NewColumn("id", "uuid", 0, 0, base.String("uuid_generate_v4 ()"), base.Bool(false), base.String("primary key"), nil, nil),
 	}
 	rs = append(rs, cols...)
 	rs = append(
@@ -66,6 +66,8 @@ func (p *IColumn) GetColumnType() string {
 		return "int4"
 	case "int8":
 		return "int8"
+	case "uuid":
+		return "uuid"
 	case "varchar":
 		if p.CharaMax > 0 {
 			return fmt.Sprintf("character varying(%d)", p.CharaMax)
@@ -265,6 +267,8 @@ func (p *IColumn) GetGoType() string {
 		value = "time.Time"
 	case "bool":
 		value = "bool"
+	case "uuid":
+		value = "string"
 	case "_varchar", "_macaddr":
 		value = "pq.StringArray"
 	case "_int4":

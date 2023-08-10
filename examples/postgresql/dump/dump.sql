@@ -1,15 +1,15 @@
 CREATE SEQUENCE accounts_seq START WITH 1 INCREMENT BY 1 NO MINVALUE MAXVALUE 2147483647 CACHE 1;
 
 CREATE TABLE accounts (
-	id integer DEFAULT nextval('accounts_seq'::regclass) NOT NULL,
+	id uuid DEFAULT "uuid_generate_v4()" NOT NULL,
 	email character varying(256) NOT NULL,
 	hashed_password character varying(256) NOT NULL,
 	salt character varying(8) NOT NULL,
 	code character varying(64) NOT NULL,
-	notification_id bigint,
-	role smallint,
-	status smallint,
-	flags integer(10),
+	notification_id int8,
+	role int2,
+	status int2,
+	flags int4,
 	freezed_at timestamp without time zone,
 	deleted_at timestamp without time zone,
 	created_at timestamp without time zone DEFAULT (now())::timestamp(0) without time zone,
@@ -50,12 +50,10 @@ CREATE INDEX accounts_email_IDX ON accounts (email);
 
 CREATE INDEX accounts_code_IDX ON accounts (code);
 
-ALTER TABLE ONLY accounts ADD CONSTRAINT accounts_account_activates_FK FOREIGN KEY (id) REFERENCES account_activates(account_id);
-
 CREATE SEQUENCE pincodes_seq START WITH 1 INCREMENT BY 1 NO MINVALUE MAXVALUE 2147483647 CACHE 1;
 
 CREATE TABLE pincodes (
-	id integer DEFAULT nextval('pincodes_seq'::regclass) NOT NULL,
+	id uuid DEFAULT "uuid_generate_v4()" NOT NULL,
 	pin character varying(6) NOT NULL,
 	created_at timestamp without time zone DEFAULT (now())::timestamp(0) without time zone,
 	updated_at timestamp without time zone DEFAULT (now())::timestamp(0) without time zone
@@ -78,10 +76,10 @@ CREATE INDEX pincodes_pin_IDX ON pincodes (pin);
 CREATE SEQUENCE account_activates_seq START WITH 1 INCREMENT BY 1 NO MINVALUE MAXVALUE 2147483647 CACHE 1;
 
 CREATE TABLE account_activates (
-	id integer DEFAULT nextval('account_activates_seq'::regclass) NOT NULL,
-	account_id bigint(20) NOT NULL,
+	id uuid DEFAULT "uuid_generate_v4()" NOT NULL,
+	account_id int8 NOT NULL,
 	uuid character varying(64) NOT NULL,
-	pincode_id bigint(20) NOT NULL,
+	pincode_id int8 NOT NULL,
 	expired_at timestamp without time zone,
 	activated_at timestamp without time zone,
 	last_login_at timestamp without time zone,
@@ -124,9 +122,9 @@ ALTER TABLE ONLY account_activates ADD CONSTRAINT account_activates_pincodes_FK 
 CREATE SEQUENCE account_pincodes_seq START WITH 1 INCREMENT BY 1 NO MINVALUE MAXVALUE 2147483647 CACHE 1;
 
 CREATE TABLE account_pincodes (
-	id integer DEFAULT nextval('account_pincodes_seq'::regclass) NOT NULL,
-	account_id bigint(20) NOT NULL,
-	pincode_id bigint(20) NOT NULL,
+	id uuid DEFAULT "uuid_generate_v4()" NOT NULL,
+	account_id int8 NOT NULL,
+	pincode_id int8 NOT NULL,
 	expired_at timestamp without time zone,
 	deleted_at timestamp without time zone,
 	created_at timestamp without time zone DEFAULT (now())::timestamp(0) without time zone,
@@ -165,7 +163,7 @@ CREATE TABLE action_logs (
 	_id character varying(64) NOT NULL,
 	uuid character varying(64) NOT NULL,
 	email character varying(256),
-	action_type smallint,
+	action_type int2,
 	message text NOT NULL,
 	recorded_at timestamp without time zone NOT NULL,
 	created_at timestamp without time zone DEFAULT (now())::timestamp(0) without time zone,

@@ -11,7 +11,7 @@ func Accounts() db.ITable {
 		Name:      "accounts",
 		UseSchema: base.Bool(false),
 		Comment:   base.String("アカウントマスタ"),
-		Columns: db.DefaultColumn("accounts_seq",
+		Columns: db.DefaultColumn(
 			db.NewColumn("email", "varchar", 256, 0, nil, base.Bool(false), base.String("メールアドレス"), nil, nil),
 			db.NewColumn("hashed_password", "varchar", 256, 0, nil, base.Bool(false), base.String("ハッシュ化済みパスワード"), nil, nil),
 			db.NewColumn("salt", "varchar", 8, 0, nil, base.Bool(false), base.String("ソルト"), nil, nil),
@@ -29,9 +29,6 @@ func Accounts() db.ITable {
 		),
 		Foreignkeys: []db.IForeignkey{
 			// db.NewFK("accounts_account_activates_FK", "id", "account_activates", "account_id", false, true),
-		},
-		Sequences: []db.ISequence{
-			db.NewSeq("accounts_seq", 1, 1, 2147483647, 1),
 		},
 		Enums: []db.IEnum{
 			db.NewEnum("role", db.EnumTypeBitfield, map[string]interface{}{

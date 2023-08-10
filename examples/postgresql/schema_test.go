@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"testing"
@@ -61,4 +62,18 @@ func TestSchema(t *testing.T) {
 	base.Init()
 	src := db.NewSchemaFromDB()
 	src.CreateSchema("./dump")
+}
+
+func TestTruncateTable(t *testing.T) {
+	SetEnv()
+	base.Init()
+	src := db.NewSchemaFromDB()
+	for _, table := range src.Tables {
+		fmt.Printf("テーブルを削除します: %s\n", table.Name)
+		if err := base.DB.Exec(table.Drop()).Error; err != nil {
+			fmt.Printf("削除エラー: %s\n", err)
+		}
+	}
+	fmt.Print("DBのマイグレーションを実施します\n")
+	Schema().Run()
 }

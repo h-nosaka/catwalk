@@ -111,6 +111,9 @@ func (p *ISchema) Run() {
 	lines := strings.Split(diff, ";\n")
 	count := 0
 	after := []string{}
+	if err := base.DB.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";").Error; err != nil {
+		fmt.Println(err)
+	}
 	for _, sql := range lines {
 		if len(sql) > 10 {
 			// FOREIGN KEYは他テーブルとの兼ね合いがあるので、最後に実行する

@@ -47,8 +47,8 @@ services:
     command: postgres -c log_statement=all
     volumes:
       - pdb-data:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
+    # ports:
+    #   - 5432:5432
     logging: *logging
 
 volumes:

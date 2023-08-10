@@ -10,9 +10,9 @@ import (
 type AccountRole uint64
 
 const (
-	AccountRoleManager AccountRole = 1 << iota
+	AccountRoleWriter AccountRole = 1 << iota
+	AccountRoleManager
 	AccountRoleViewer
-	AccountRoleWriter
 )
 
 func (p AccountRole) Check(flag AccountRole) bool {
@@ -71,22 +71,21 @@ func (p *AccountStatus) UnmarshalJSON(data []byte) error {
 
 type Account struct {
 	// column
-	Id             int           `json:"id"`                                // primary key
-	Email          string        `json:"email" gorm:"primarykey"`           // メールアドレス
-	HashedPassword string        `json:"hashed_password" gorm:"primarykey"` // ハッシュ化済みパスワード
-	Salt           string        `json:"salt" gorm:"primarykey"`            // ソルト
-	Code           string        `json:"code" gorm:"primarykey"`            // 表示ID
-	NotificationId *int64        `json:"notification_id" gorm:"primarykey"` // notifications.id
-	Role           AccountRole   `json:"role" gorm:"primarykey"`            // ロール
-	Status         AccountStatus `json:"status" gorm:"primarykey"`          // ステータス
-	Flags          *int          `json:"flags" gorm:"primarykey"`           // フラグ
-	FreezedAt      *time.Time    `json:"freezed_at" gorm:"primarykey"`      // 凍結日
-	DeletedAt      *time.Time    `json:"deleted_at" gorm:"primarykey"`      // 削除日
-	CreatedAt      *time.Time    `json:"created_at" gorm:"primarykey"`      // 作成日
-	UpdatedAt      *time.Time    `json:"updated_at" gorm:"primarykey"`      // 更新日
+	Id             string        `json:"id" gorm:"primarykey"` // primary key
+	Email          string        `json:"email"`                // メールアドレス
+	HashedPassword string        `json:"hashed_password"`      // ハッシュ化済みパスワード
+	Salt           string        `json:"salt"`                 // ソルト
+	Code           string        `json:"code"`                 // 表示ID
+	NotificationId *int64        `json:"notification_id"`      // notifications.id
+	Role           AccountRole   `json:"role"`                 // ロール
+	Status         AccountStatus `json:"status"`               // ステータス
+	Flags          *int          `json:"flags"`                // フラグ
+	FreezedAt      *time.Time    `json:"freezed_at"`           // 凍結日
+	DeletedAt      *time.Time    `json:"deleted_at"`           // 削除日
+	CreatedAt      *time.Time    `json:"created_at"`           // 作成日
+	UpdatedAt      *time.Time    `json:"updated_at"`           // 更新日
 
 	// relation
-	AccountActivates []AccountActivate `gorm:"foreignKey:AccountId;references:Id"`
 }
 
 func (p *Account) Find(db *gorm.DB, preloads ...string) error {
@@ -94,7 +93,7 @@ func (p *Account) Find(db *gorm.DB, preloads ...string) error {
 	for _, preload := range preloads {
 		tx = tx.Preload(preload)
 	}
-	if err := tx.First(p).Error; err != nil {
+	if err := tx.Where(p).First(p).Error; err != nil {
 		return err
 	}
 	return nil

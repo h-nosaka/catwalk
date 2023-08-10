@@ -10,9 +10,9 @@ import (
 type AccountRole uint64
 
 const (
-	AccountRoleViewer AccountRole = 1 << iota
+	AccountRoleManager AccountRole = 1 << iota
+	AccountRoleViewer
 	AccountRoleWriter
-	AccountRoleManager
 )
 
 func (p AccountRole) Check(flag AccountRole) bool {
@@ -22,36 +22,36 @@ func (p AccountRole) Check(flag AccountRole) bool {
 type AccountStatus uint
 
 const (
-	AccountStatusDeleted   = AccountStatus(9)
 	AccountStatusCreated   = AccountStatus(0)
 	AccountStatusActivated = AccountStatus(1)
 	AccountStatusFreezed   = AccountStatus(8)
+	AccountStatusDeleted   = AccountStatus(9)
 )
 
 func (p AccountStatus) String() string {
 	switch p {
-	case AccountStatusCreated:
-		return "Created"
 	case AccountStatusActivated:
 		return "Activated"
 	case AccountStatusFreezed:
 		return "Freezed"
 	case AccountStatusDeleted:
 		return "Deleted"
+	case AccountStatusCreated:
+		return "Created"
 	}
 	return ""
 }
 
 func AccountStatuses(key string) AccountStatus {
 	switch key {
-	case "Deleted":
-		return AccountStatusDeleted
 	case "Created":
 		return AccountStatusCreated
 	case "Activated":
 		return AccountStatusActivated
 	case "Freezed":
 		return AccountStatusFreezed
+	case "Deleted":
+		return AccountStatusDeleted
 	}
 	return 0
 }
