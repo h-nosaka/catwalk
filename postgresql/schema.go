@@ -166,3 +166,42 @@ func (p *ISchema) CreateSchema(output string) {
 		panic(err)
 	}
 }
+
+func (p *ISchema) ER(output string) {
+	buf := bytes.NewBuffer([]byte{})
+	buf.WriteString("```mermaid\nerDiagram\n\n")
+	for _, item := range p.Tables {
+		buf.WriteString(fmt.Sprintf("%s {\n", item.Name))
+		for _, col := range item.Columns {
+			comment := ""
+			if col.Comment != nil {
+				comment = *col.Comment
+			}
+			buf.WriteString(fmt.Sprintf("  %s %s \"%s\"\n", col.Name, col.DataType, comment))
+		}
+		buf.WriteString("}\n\n")
+	}
+	for _, item := range p.Tables {
+		buf.WriteString(fmt.Sprintf("%%%% %s\n", item.Name))
+		for _, rel := range item.Foreignkeys {
+			if rel.HasOne {
+				buf.WriteString(fmt.Sprintf("%s ||--|| %s : \"foreignkey\"\n", item.Name, rel.RefTable))
+			} else {
+				buf.WriteString(fmt.Sprintf("%s ||--o{ %s : \"foreignkey\"\n", item.Name, rel.RefTable))
+			}
+		}
+		for _, rel := range item.Relations {
+			if rel.HasOne {
+				buf.WriteString(fmt.Sprintf("%s ||--|| %s : \"relation\"\n", item.Name, rel.RefTable))
+			} else {
+				buf.WriteString(fmt.Sprintf("%s ||--o{ %s : \"relation\"\n", item.Name, rel.RefTable))
+			}
+		}
+		buf.WriteString("\n")
+	}
+
+	buf.WriteString("```\n")
+	if err := os.WriteFile(output, buf.Bytes(), 0666); err != nil {
+		panic(err)
+	}
+}

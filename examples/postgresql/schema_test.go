@@ -65,6 +65,12 @@ func TestSchema(t *testing.T) {
 	src.CreateSchema("./dump")
 }
 
+func TestER(t *testing.T) {
+	SetEnv()
+	base.Init()
+	Schema().ER("./dump/er.md")
+}
+
 func TestTruncateTable(t *testing.T) {
 	SetEnv()
 	base.Init()
