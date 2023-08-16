@@ -158,7 +158,9 @@ func (p *ISchema) Model(output ...string) {
 func (p *ISchema) CreateSchema(output string) {
 	for _, table := range p.Tables {
 		filename := fmt.Sprintf("%s/%s.go", output, table.Name)
-		os.WriteFile(filename, table.CreateSchemaFile(), 0666)
+		if err := os.WriteFile(filename, table.CreateSchemaFile(), 0666); err != nil {
+			panic(err)
+		}
 	}
 	if err := exec.Command("go", "fmt", fmt.Sprintf("%s/...", output)).Run(); err != nil {
 		panic(err)
