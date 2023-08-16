@@ -295,7 +295,7 @@ func (p *IColumn) GetGoTag(table *ITable) string {
 		}
 	}
 	if ok {
-		return ` gorm:"primarykey"`
+		return ` gorm:"primarykey;size:255;default:uuid_generate_v4()"`
 	}
 	switch p.DataType {
 	case "_int4":

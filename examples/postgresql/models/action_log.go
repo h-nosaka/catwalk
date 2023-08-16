@@ -1,4 +1,4 @@
-package model
+package models
 
 import (
 	"encoding/json"
@@ -10,53 +10,51 @@ type ActionLogActionType uint
 
 const (
 	ActionLogActionTypePAUSED     = ActionLogActionType(3)
-	ActionLogActionTypeSAVEYOU    = ActionLogActionType(11)
+	ActionLogActionTypeCLOUDMAIL  = ActionLogActionType(15)
+	ActionLogActionTypeSLACK      = ActionLogActionType(16)
 	ActionLogActionTypeRESUMED    = ActionLogActionType(1)
+	ActionLogActionTypeINACTIVE   = ActionLogActionType(2)
 	ActionLogActionTypeDETACHED   = ActionLogActionType(4)
+	ActionLogActionTypeSAVEYOU    = ActionLogActionType(11)
 	ActionLogActionTypeKINGOFTIME = ActionLogActionType(12)
 	ActionLogActionTypeKOTADMIN   = ActionLogActionType(13)
 	ActionLogActionTypeGAROON     = ActionLogActionType(14)
-	ActionLogActionTypeCLOUDMAIL  = ActionLogActionType(15)
-	ActionLogActionTypeSLACK      = ActionLogActionType(16)
-	ActionLogActionTypeINACTIVE   = ActionLogActionType(2)
 )
 
 func (p ActionLogActionType) String() string {
 	switch p {
-	case ActionLogActionTypeGAROON:
-		return "GAROON"
-	case ActionLogActionTypeCLOUDMAIL:
-		return "CLOUDMAIL"
-	case ActionLogActionTypeSLACK:
-		return "SLACK"
+	case ActionLogActionTypeRESUMED:
+		return "RESUMED"
 	case ActionLogActionTypeINACTIVE:
 		return "INACTIVE"
 	case ActionLogActionTypeDETACHED:
 		return "DETACHED"
+	case ActionLogActionTypeSAVEYOU:
+		return "SAVEYOU"
 	case ActionLogActionTypeKINGOFTIME:
 		return "KINGOFTIME"
 	case ActionLogActionTypeKOTADMIN:
 		return "KOTADMIN"
-	case ActionLogActionTypeRESUMED:
-		return "RESUMED"
+	case ActionLogActionTypeGAROON:
+		return "GAROON"
 	case ActionLogActionTypePAUSED:
 		return "PAUSED"
-	case ActionLogActionTypeSAVEYOU:
-		return "SAVEYOU"
+	case ActionLogActionTypeCLOUDMAIL:
+		return "CLOUDMAIL"
+	case ActionLogActionTypeSLACK:
+		return "SLACK"
 	}
 	return ""
 }
 
 func ActionLogActionTypes(key string) ActionLogActionType {
 	switch key {
-	case "CLOUDMAIL":
-		return ActionLogActionTypeCLOUDMAIL
-	case "SLACK":
-		return ActionLogActionTypeSLACK
 	case "INACTIVE":
 		return ActionLogActionTypeINACTIVE
 	case "DETACHED":
 		return ActionLogActionTypeDETACHED
+	case "SAVEYOU":
+		return ActionLogActionTypeSAVEYOU
 	case "KINGOFTIME":
 		return ActionLogActionTypeKINGOFTIME
 	case "KOTADMIN":
@@ -65,10 +63,12 @@ func ActionLogActionTypes(key string) ActionLogActionType {
 		return ActionLogActionTypeGAROON
 	case "RESUMED":
 		return ActionLogActionTypeRESUMED
+	case "CLOUDMAIL":
+		return ActionLogActionTypeCLOUDMAIL
+	case "SLACK":
+		return ActionLogActionTypeSLACK
 	case "PAUSED":
 		return ActionLogActionTypePAUSED
-	case "SAVEYOU":
-		return ActionLogActionTypeSAVEYOU
 	}
 	return 0
 }

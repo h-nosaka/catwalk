@@ -204,21 +204,25 @@ func (p *ITable) Diff(src *[]ITable) string {
 
 func (p *ITable) CreateGoModel(path string) {
 	buf := bytes.NewBuffer([]byte{})
-	buf.WriteString("package model\n\n")
+	buf.WriteString("package models\n\n")
 	// インポート定義
-	imports := []string{`"time"`}
+	imports := []string{}
 	if p.IsDB == nil || (p.IsDB != nil && *p.IsDB) {
 		imports = append(imports, `"gorm.io/gorm"`)
 	}
 	for _, item := range p.Columns {
 		switch item.DataType {
 		case "_varchar", "_macaddr", "_int4":
-			if slices.Contains(imports, `"github.com/lib/pq"`) {
+			if !slices.Contains(imports, `"github.com/lib/pq"`) {
 				imports = append(imports, `"github.com/lib/pq"`)
 			}
 		case "json":
-			if slices.Contains(imports, `"encoding/json"`) {
+			if !slices.Contains(imports, `"encoding/json"`) {
 				imports = append(imports, `"encoding/json"`)
+			}
+		case "timestamp":
+			if !slices.Contains(imports, `"time"`) {
+				imports = append(imports, `"time"`)
 			}
 		}
 	}

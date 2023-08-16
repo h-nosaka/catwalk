@@ -1,4 +1,4 @@
-package model
+package models
 
 import (
 	"gorm.io/gorm"
@@ -8,10 +8,10 @@ import (
 // ピンコードマスタ
 type Pincode struct {
 	// column
-	Id        string     `json:"id" gorm:"primarykey"` // primary key
-	Pin       string     `json:"pin"`                  // ピン
-	CreatedAt *time.Time `json:"created_at"`           // 作成日
-	UpdatedAt *time.Time `json:"updated_at"`           // 更新日
+	Id        string     `json:"id" gorm:"primarykey;size:255;default:uuid_generate_v4()"` // primary key
+	Pin       string     `json:"pin"`                                                      // ピン
+	CreatedAt *time.Time `json:"created_at"`                                               // 作成日
+	UpdatedAt *time.Time `json:"updated_at"`                                               // 更新日
 
 	// relation
 }

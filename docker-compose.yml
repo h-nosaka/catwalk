@@ -44,6 +44,7 @@ services:
       POSTGRES_PASSWORD: 'q1w2e3r4'
       POSTGRES_DB: 'app'
       TZ: 'Asia/Tokyo'
+      POSTGRES_EXTENSIONS: uuid-ossp
     command: postgres -c log_statement=all
     volumes:
       - pdb-data:/var/lib/postgresql/data
