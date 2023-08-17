@@ -373,8 +373,13 @@ import (
 	buf.WriteString("		},\n")
 	buf.WriteString("		Indexes: []db.IIndex{\n")
 	for _, idx := range p.Indexes {
-		buf.WriteString(fmt.Sprintf(`			db.NewIndex("%s", context.String("%s"), "%s"),
+		if idx.ConstraintType == nil {
+			buf.WriteString(fmt.Sprintf(`			db.NewIndex("%s", nil, "%s"),
+`, idx.Name, strings.Join(idx.Columns, `", "`)))
+		} else {
+			buf.WriteString(fmt.Sprintf(`			db.NewIndex("%s", context.String("%s"), "%s"),
 `, idx.Name, *idx.ConstraintType, strings.Join(idx.Columns, `", "`)))
+		}
 	}
 	buf.WriteString("		},\n")
 	buf.WriteString("		Foreignkeys: []db.IForeignkey{\n")
