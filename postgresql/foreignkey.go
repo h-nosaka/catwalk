@@ -3,7 +3,7 @@ package postgresql
 import (
 	"bytes"
 	"fmt"
-	"strings"
+	"regexp"
 
 	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
@@ -85,7 +85,8 @@ func (p *IForeignkey) GetReference() string {
 func (p *IForeignkey) GetRelation() string {
 	con := pluralize.NewClient()
 	model := strcase.ToCamel(con.Singular(p.RefTable))
-	key := strcase.ToCamel(strings.ReplaceAll(p.Column, "_id", ""))
+	// key := strcase.ToCamel(strings.ReplaceAll(p.Column, "_id", ""))
+	key := strcase.ToCamel(regexp.MustCompile("_id|Id$").ReplaceAllString(p.Column, ""))
 	if key == "Id" {
 		key = model
 	}
@@ -106,7 +107,8 @@ func (p *IRelation) GetReference(t *ITable) string {
 func (p *IRelation) GetRelation() string {
 	con := pluralize.NewClient()
 	model := strcase.ToCamel(con.Singular(p.RefTable))
-	key := strcase.ToCamel(strings.ReplaceAll(p.Column, "_id", ""))
+	// key := strcase.ToCamel(strings.ReplaceAll(p.Column, "_id", ""))
+	key := strcase.ToCamel(regexp.MustCompile("_id|Id$").ReplaceAllString(p.Column, ""))
 	if key == "Id" {
 		key = model
 	}

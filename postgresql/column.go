@@ -41,7 +41,7 @@ func NewColumn(name string, dataType string, charaMax int, numMax int, defaults 
 
 func DefaultColumn(cols ...IColumn) []IColumn {
 	rs := []IColumn{
-		NewColumn("id", "uuid", 0, 0, base.String("uuid_generate_v4 ()"), base.Bool(false), base.String("primary key"), nil, nil),
+		NewColumn("id", "uuid", 0, 0, base.String("uuid_generate_v4()"), base.Bool(false), base.String("primary key"), nil, nil),
 	}
 	rs = append(rs, cols...)
 	rs = append(

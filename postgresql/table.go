@@ -342,6 +342,7 @@ func (p *ITable) CreateSchemaFile() []byte {
 	buf.WriteString(`package schema
 
 import (
+	"github.com/h-nosaka/catwalk/base"
 	db "github.com/h-nosaka/catwalk/postgresql"
 )
 
@@ -353,19 +354,19 @@ import (
 	buf.WriteString(fmt.Sprintf(`		Name: "%s",
 `, p.Name))
 	if p.Comment != nil {
-		buf.WriteString(fmt.Sprintf(`		Comment: "%s",
+		buf.WriteString(fmt.Sprintf(`		Comment: base.String("%s"),
 `, *p.Comment))
 	}
 	buf.WriteString("		Columns: []db.IColumn{\n")
 	for _, col := range p.Columns {
 		def := "nil"
 		if col.Defaults != nil && *col.Defaults != "" {
-			def = fmt.Sprintf(`context.String("%s")`, *col.Defaults)
+			def = fmt.Sprintf("base.String(`%s`)", *col.Defaults)
 		}
-		null := fmt.Sprintf("context.Bool(%s)", strconv.FormatBool(col.Null))
+		null := fmt.Sprintf("base.Bool(%s)", strconv.FormatBool(col.Null))
 		comment := "nil"
 		if col.Comment != nil && *col.Comment != "" {
-			comment = fmt.Sprintf(`context.String("%s")`, *col.Comment)
+			comment = fmt.Sprintf(`base.String("%s")`, *col.Comment)
 		}
 		buf.WriteString(fmt.Sprintf(`			db.NewColumn("%s", "%s", %d, %d, %s, %s, %s, nil, nil),
 `, col.Name, col.DataType, col.CharaMax, col.NumMax, def, null, comment))
@@ -377,7 +378,7 @@ import (
 			buf.WriteString(fmt.Sprintf(`			db.NewIndex("%s", nil, "%s"),
 `, idx.Name, strings.Join(idx.Columns, `", "`)))
 		} else {
-			buf.WriteString(fmt.Sprintf(`			db.NewIndex("%s", context.String("%s"), "%s"),
+			buf.WriteString(fmt.Sprintf(`			db.NewIndex("%s", base.String("%s"), "%s"),
 `, idx.Name, *idx.ConstraintType, strings.Join(idx.Columns, `", "`)))
 		}
 	}

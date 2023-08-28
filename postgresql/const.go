@@ -40,6 +40,6 @@ const (
 		JOIN pg_catalog.pg_class ON pg_class.relname = ?
 		JOIN pg_catalog.pg_attribute ON pg_class.oid = pg_attribute.attrelid AND columns.column_name = pg_attribute.attname
 		LEFT JOIN pg_catalog.pg_description ON pg_attribute.attrelid = pg_description.objoid AND pg_attribute.attnum = pg_description.objsubid
-		WHERE table_name = ? order by ordinal_position;
+		WHERE table_schema = 'public' AND table_name = ? order by ordinal_position;
 	`
 )
