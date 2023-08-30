@@ -287,6 +287,7 @@ func (p *IColumn) GetGoType() string {
 
 func (p *IColumn) GetGoTag(table *ITable) string {
 	ok := false
+	base := fmt.Sprintf(`column:%s`, p.Name)
 	for _, index := range table.Indexes {
 		if index.ConstraintType != nil && *index.ConstraintType == "PRIMARY KEY" {
 			if slices.Contains(index.Columns, p.Name) {
@@ -295,15 +296,15 @@ func (p *IColumn) GetGoTag(table *ITable) string {
 		}
 	}
 	if ok {
-		return ` gorm:"primarykey;size:255;default:uuid_generate_v4()"`
+		return fmt.Sprintf(` gorm:"%s;primarykey;size:255;default:uuid_generate_v4()"`, base)
 	}
 	switch p.DataType {
 	case "_int4":
-		return ` gorm:"type:integer[]"`
+		return fmt.Sprintf(` gorm:"%s;type:integer[]"`, base)
 	case "_varchar", "_macaddr":
-		return ` gorm:"type:text[]"`
+		return fmt.Sprintf(` gorm:"%s;type:text[]"`, base)
 	}
-	return ""
+	return fmt.Sprintf(` gorm:"%s"`, base)
 }
 
 func (p *IColumn) GetGoComment() string {
