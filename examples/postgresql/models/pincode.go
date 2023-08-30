@@ -8,10 +8,10 @@ import (
 // ピンコードマスタ
 type Pincode struct {
 	// column
-	Id        string     `json:"id" gorm:"primarykey;size:255;default:uuid_generate_v4()"` // primary key
-	Pin       string     `json:"pin"`                                                      // ピン
-	CreatedAt *time.Time `json:"created_at"`                                               // 作成日
-	UpdatedAt *time.Time `json:"updated_at"`                                               // 更新日
+	Id        string     `json:"id" gorm:"column:id;primarykey;size:255;default:uuid_generate_v4()"` // primary key
+	Pin       string     `json:"pin" gorm:"column:pin"`                                              // ピン
+	CreatedAt *time.Time `json:"created_at" gorm:"column:created_at"`                                // 作成日
+	UpdatedAt *time.Time `json:"updated_at" gorm:"column:updated_at"`                                // 更新日
 
 	// relation
 }

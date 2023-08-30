@@ -87,7 +87,7 @@ func (p *IForeignkey) GetRelation() string {
 	model := strcase.ToCamel(con.Singular(p.RefTable))
 	// key := strcase.ToCamel(strings.ReplaceAll(p.Column, "_id", ""))
 	key := strcase.ToCamel(regexp.MustCompile("_id|Id$").ReplaceAllString(p.Column, ""))
-	if key == "Id" {
+	if key == "Id" || key == "" {
 		key = model
 	}
 	if !p.HasOne {
@@ -98,8 +98,13 @@ func (p *IForeignkey) GetRelation() string {
 
 func (p *IRelation) GetReference(t *ITable) string {
 	con := pluralize.NewClient()
-	if !p.HasOne && strcase.ToCamel(p.Column) == "Id" && p.RefColumn == fmt.Sprintf("%s_id", con.Singular(t.Name)) {
-		return fmt.Sprintf("foreignKey:%s", strcase.ToCamel(p.Column))
+	fmt.Println(strcase.ToCamel(p.Column), strcase.ToCamel(p.RefColumn), strcase.ToCamel(fmt.Sprintf("%s_id", con.Singular(t.Name))))
+	if !p.HasOne && strcase.ToCamel(p.RefColumn) == strcase.ToCamel(fmt.Sprintf("%s_id", con.Singular(t.Name))) {
+		if strcase.ToCamel(p.Column) == "Id" {
+			return ""
+		} else {
+			return fmt.Sprintf("foreignKey:%s", strcase.ToCamel(p.Column))
+		}
 	}
 	return fmt.Sprintf("foreignKey:%s;references:%s", strcase.ToCamel(p.Column), strcase.ToCamel(p.RefColumn))
 }
@@ -109,7 +114,7 @@ func (p *IRelation) GetRelation() string {
 	model := strcase.ToCamel(con.Singular(p.RefTable))
 	// key := strcase.ToCamel(strings.ReplaceAll(p.Column, "_id", ""))
 	key := strcase.ToCamel(regexp.MustCompile("_id|Id$").ReplaceAllString(p.Column, ""))
-	if key == "Id" {
+	if key == "Id" || key == "" {
 		key = model
 	}
 	if !p.HasOne {
