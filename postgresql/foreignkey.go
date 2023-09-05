@@ -98,7 +98,6 @@ func (p *IForeignkey) GetRelation() string {
 
 func (p *IRelation) GetReference(t *ITable) string {
 	con := pluralize.NewClient()
-	fmt.Println(strcase.ToCamel(p.Column), strcase.ToCamel(p.RefColumn), strcase.ToCamel(fmt.Sprintf("%s_id", con.Singular(t.Name))))
 	if !p.HasOne && strcase.ToCamel(p.RefColumn) == strcase.ToCamel(fmt.Sprintf("%s_id", con.Singular(t.Name))) {
 		if strcase.ToCamel(p.Column) == "Id" {
 			return ""

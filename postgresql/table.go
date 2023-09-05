@@ -18,11 +18,20 @@ type IMethod struct {
 	Imports *[]string
 }
 
+type JsonCase string
+
+const (
+	JsonCaseSnake  = JsonCase("snake")
+	JsonCaseCamel  = JsonCase("camel")
+	JsonCasePascal = JsonCase("pascal")
+)
+
 type ITable struct {
 	Schema      string        `gorm:"column:schemaname"`
 	Name        string        `gorm:"column:tablename"`
 	IsDB        *bool         `gorm:"->:false" yaml:"is_db,omitempty"`
 	UseSchema   *bool         `gorm:"->:false"`
+	JsonCase    JsonCase      `gorm:"->:false"`
 	Comment     *string       `gorm:"column:comment" yaml:"comment,omitempty"`
 	Rename      *string       `gorm:"->:false" yaml:"rename,omitempty"`
 	Columns     []IColumn     `gorm:"->:false"`
@@ -259,11 +268,20 @@ func (p *ITable) CreateGoModel(path string) {
 				data = enum.GoStructName(p)
 			}
 		}
+		to := item.Name
+		switch p.JsonCase {
+		case JsonCaseCamel:
+			to = strcase.ToLowerCamel(item.Name)
+		case JsonCasePascal:
+			to = strcase.ToCamel(item.Name)
+		case JsonCaseSnake:
+			to = strcase.ToSnake(item.Name)
+		}
 		buf.WriteString(fmt.Sprintf(
 			"\t%s %s `json:\"%s\"%s`%s\n",
 			strcase.ToCamel(item.Name),
 			data,
-			item.Name,
+			to,
 			item.GetGoTag(p),    // gorm用タグの設定
 			item.GetGoComment(), // コメント処理
 		))
@@ -288,8 +306,11 @@ func (p *ITable) CreateGoModel(path string) {
 		))
 	}
 	buf.WriteString("}\n\n")
-	// テーブル名が複数形でない場合の処理
-	if con.IsSingular(p.Name) {
+	if p.UseSchema != nil && *p.UseSchema && p.Schema != "public" { // スキーマ名がpublic以外の場合
+		buf.WriteString(fmt.Sprintf("func (c *%s) TableName() string {\n", strcase.ToCamel(table)))
+		buf.WriteString(fmt.Sprintf("\treturn `%s.\"%s\"`\n", p.Schema, p.Name))
+		buf.WriteString("}\n\n")
+	} else if con.IsSingular(p.Name) { // テーブル名が複数形でない場合
 		buf.WriteString(fmt.Sprintf("func (c *%s) TableName() string {\n", strcase.ToCamel(table)))
 		buf.WriteString(fmt.Sprintf("\treturn \"%s\"\n", p.Name))
 		buf.WriteString("}\n\n")
