@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/h-nosaka/catwalk/base"
+	"github.com/h-nosaka/catwalk/examples/postgresql/models"
 	mdb "github.com/h-nosaka/catwalk/mysql"
 )
 
@@ -62,4 +63,24 @@ func TestSchema(t *testing.T) {
 	base.Init()
 	src := mdb.NewSchemaFromDB()
 	src.CreateSchema("./dump")
+}
+
+func TestTruncateTable(t *testing.T) {
+	SetEnv()
+	base.Init()
+	for _, table := range mdb.NewSchemaFromDB().Tables {
+		if err := base.DB.Exec(table.Drop()).Error; err != nil {
+			t.Error(err)
+		}
+	}
+}
+
+func TestData(t *testing.T) {
+	SetEnv()
+	base.Init()
+	account := models.Account{Email: "test@example.com"}
+	if err := base.DB.Save(&account).Error; err != nil {
+		t.Error(err)
+	}
+	t.Log(account)
 }

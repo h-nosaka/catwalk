@@ -48,6 +48,18 @@ func DefaultColumn(cols ...IColumn) []IColumn {
 	return rs
 }
 
+func DefaultUuidColumn(cols ...IColumn) []IColumn {
+	rs := []IColumn{
+		NewColumn("id", "uuid", nil, base.String("UUID()"), base.Bool(false), base.String("primary key"), nil),
+	}
+	rs = append(rs, cols...)
+	rs = append(
+		rs,
+		TimestampColumn()...,
+	)
+	return rs
+}
+
 func TimestampColumn() []IColumn {
 	return []IColumn{
 		NewColumn("created_at", "timestamp", nil, base.String("current_timestamp()"), nil, base.String("作成日"), nil),
@@ -191,7 +203,7 @@ func (p *IColumn) GetGoType() string {
 		value = "float32"
 	case "double":
 		value = "float64"
-	case "char", "varchar", "text", "tinytext", "midiumtext", "longtext":
+	case "char", "varchar", "text", "tinytext", "midiumtext", "longtext", "uuid":
 		value = "string"
 	case "timestamp", "date", "datetime", "time":
 		value = "time.Time"
@@ -248,7 +260,7 @@ func (p *IColumn) GetDartType() string {
 		value = "double"
 	case "double":
 		value = "double"
-	case "char", "varchar", "text", "tinytext", "midiumtext", "longtext":
+	case "char", "varchar", "text", "tinytext", "midiumtext", "longtext", "uuid":
 		value = "String"
 	case "timestamp":
 		value = "int"

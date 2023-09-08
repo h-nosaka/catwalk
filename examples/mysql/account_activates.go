@@ -11,7 +11,7 @@ func AccountActivates() db.ITable {
 		Name:    "account_activates",
 		Comment: base.String("UUID管理マスタ"),
 		Columns: db.DefaultColumn(
-			db.NewColumn("account_id", "bigint(20) unsigned", nil, nil, base.Bool(false), base.String("accounts.id"), nil),
+			db.NewColumn("account_id", "uuid", nil, nil, base.Bool(false), base.String("accounts.id"), nil),
 			db.NewColumn("uuid", "varchar(64)", nil, nil, base.Bool(false), base.String("UUID"), nil),
 			db.NewColumn("pincode_id", "bigint(20) unsigned", nil, nil, base.Bool(false), base.String("pincodes.id"), nil),
 			db.NewColumn("expired_at", "timestamp", nil, nil, nil, base.String("PIN有効期限日時"), nil),

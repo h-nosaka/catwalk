@@ -10,7 +10,7 @@ func Accounts() db.ITable {
 		Schema:  "app",
 		Name:    "accounts",
 		Comment: base.String("アカウントマスタ"),
-		Columns: db.DefaultColumn(
+		Columns: db.DefaultUuidColumn(
 			db.NewColumn("email", "varchar(256)", nil, nil, base.Bool(false), base.String("メールアドレス"), nil),
 			db.NewColumn("hashed_password", "varchar(256)", nil, nil, base.Bool(false), base.String("ハッシュ化済みパスワード"), nil),
 			db.NewColumn("salt", "varchar(8)", nil, nil, base.Bool(false), base.String("ソルト"), nil),
