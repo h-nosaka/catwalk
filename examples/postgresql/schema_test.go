@@ -35,7 +35,6 @@ func TestModel(t *testing.T) {
 	if err := exec.Command("go", "fmt", "./models/...").Run(); err != nil {
 		t.Error(err)
 	}
-	t.Error("test")
 }
 
 func TestCreateDatabase(t *testing.T) {

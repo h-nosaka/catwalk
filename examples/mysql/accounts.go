@@ -32,8 +32,8 @@ func Accounts() db.ITable {
 		Enums: []db.IEnum{
 			db.NewEnum("role", db.EnumTypeBitfield, map[string]interface{}{
 				"Viewer":  1,
-				"Writer":  1,
-				"Manager": 1,
+				"Writer":  2,
+				"Manager": 3,
 			}),
 			db.NewEnum("status", db.EnumTypeUint, map[string]interface{}{
 				"Created":   0,

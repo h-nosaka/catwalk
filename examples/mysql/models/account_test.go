@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/h-nosaka/catwalk/examples/mysql/models"
 )
 
 func TestAccount(t *testing.T) {
 	account := models.Account{
-		Id:     1,
+		Id:     uuid.NewString(),
 		Email:  "test@example.com",
 		Role:   models.AccountRoleManager | models.AccountRoleWriter,
 		Status: models.AccountStatusActivated,

@@ -9,7 +9,7 @@ import (
 type AccountPincode struct {
 	// column
 	Id        uint64     `json:"id"`         // primary key
-	AccountId uint64     `json:"account_id"` // accounts.id
+	AccountId string     `json:"account_id"` // accounts.id
 	PincodeId uint64     `json:"pincode_id"` // pincodes.id
 	ExpiredAt *time.Time `json:"expired_at"` // PIN有効期限日時
 	DeletedAt *time.Time `json:"deleted_at"` // 使用済み日時

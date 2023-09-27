@@ -1,4 +1,4 @@
-FROM golang:1.19
+FROM golang:1.20
 
 # 開発用
 RUN go install github.com/uudashr/gopkgs/v2/cmd/gopkgs@latest

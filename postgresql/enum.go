@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/gertd/go-pluralize"
 	"github.com/iancoleman/strcase"
@@ -61,6 +62,11 @@ type IEnum struct {
 	Values map[string]interface{}
 }
 
+type ISortValue struct {
+	Key   string
+	Value interface{}
+}
+
 func NewEnum(column string, types EnumType, values map[string]interface{}) IEnum {
 	return IEnum{
 		Column: column,
@@ -74,28 +80,41 @@ func (p *IEnum) GoCreate(table *ITable) string {
 	name := p.GoStructName(table)
 	dataType := p.Type.String()
 	buf.WriteString(fmt.Sprintf("type %s %s\n", name, dataType))
+
+	values := []ISortValue{}
+	for key, value := range p.Values {
+		values = append(values, ISortValue{Key: key, Value: value})
+	}
+	switch p.Type {
+	case EnumTypeString:
+		sort.Slice(values, func(a, b int) bool { return values[a].Value.(string) < values[b].Value.(string) })
+	case EnumTypeUint, EnumTypeBitfield:
+		sort.Slice(values, func(a, b int) bool { return values[a].Value.(int) < values[b].Value.(int) })
+	}
+
 	buf.WriteString("const (\n")
 	switch p.Type {
 	case EnumTypeString:
-		for key, value := range p.Values {
-			buf.WriteString(fmt.Sprintf("\t%s%s = %s(\"%s\")\n", name, key, name, value))
+		for _, value := range values {
+			buf.WriteString(fmt.Sprintf("\t%s%s = %s(\"%s\")\n", name, value.Key, name, value.Value.(string)))
 		}
 	case EnumTypeUint:
-		for key, value := range p.Values {
-			buf.WriteString(fmt.Sprintf("\t%s%s = %s(%d)\n", name, key, name, value))
+		for _, value := range values {
+			buf.WriteString(fmt.Sprintf("\t%s%s = %s(%d)\n", name, value.Key, name, value.Value.(int)))
 		}
 	case EnumTypeBitfield:
 		ok := true
-		for key := range p.Values {
+		for _, value := range values {
 			if ok {
-				buf.WriteString(fmt.Sprintf("\t%s%s %s = 1 << iota\n", name, key, name))
+				buf.WriteString(fmt.Sprintf("\t%s%s %s = 1 << iota\n", name, value.Key, name))
 				ok = false
 			} else {
-				buf.WriteString(fmt.Sprintf("\t%s%s\n", name, key))
+				buf.WriteString(fmt.Sprintf("\t%s%s\n", name, value.Key))
 			}
 		}
 	}
 	buf.WriteString(")\n\n")
+
 	switch p.Type {
 	case EnumTypeString:
 		buf.WriteString(fmt.Sprintf("func (p %s) String() string {\n", name))
@@ -104,9 +123,9 @@ func (p *IEnum) GoCreate(table *ITable) string {
 	case EnumTypeUint:
 		buf.WriteString(fmt.Sprintf("func (p %s) String() string {\n", name))
 		buf.WriteString("\tswitch p {\n")
-		for key := range p.Values {
-			buf.WriteString(fmt.Sprintf("\tcase %s%s:\n", name, key))
-			buf.WriteString(fmt.Sprintf("\t\treturn \"%s\"\n", key))
+		for _, value := range values {
+			buf.WriteString(fmt.Sprintf("\tcase %s%s:\n", name, value.Key))
+			buf.WriteString(fmt.Sprintf("\t\treturn \"%s\"\n", value.Key))
 		}
 		buf.WriteString("\t}\n")
 		buf.WriteString("\treturn \"\"\n")
@@ -116,9 +135,9 @@ func (p *IEnum) GoCreate(table *ITable) string {
 		names := con.Plural(name)
 		buf.WriteString(fmt.Sprintf("func %s(key string) %s {\n", names, name))
 		buf.WriteString("\tswitch key {\n")
-		for key := range p.Values {
-			buf.WriteString(fmt.Sprintf("\tcase \"%s\":\n", key))
-			buf.WriteString(fmt.Sprintf("\t\treturn %s%s\n", name, key))
+		for _, value := range values {
+			buf.WriteString(fmt.Sprintf("\tcase \"%s\":\n", value.Key))
+			buf.WriteString(fmt.Sprintf("\t\treturn %s%s\n", name, value.Key))
 		}
 		buf.WriteString("\t}\n")
 		buf.WriteString("\treturn 0\n")

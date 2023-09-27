@@ -10,9 +10,9 @@ import (
 type AccountRole uint64
 
 const (
-	AccountRoleManager AccountRole = 1 << iota
-	AccountRoleViewer
+	AccountRoleViewer AccountRole = 1 << iota
 	AccountRoleWriter
+	AccountRoleManager
 )
 
 func (p AccountRole) Check(flag AccountRole) bool {
@@ -30,14 +30,14 @@ const (
 
 func (p AccountStatus) String() string {
 	switch p {
+	case AccountStatusCreated:
+		return "Created"
 	case AccountStatusActivated:
 		return "Activated"
 	case AccountStatusFreezed:
 		return "Freezed"
 	case AccountStatusDeleted:
 		return "Deleted"
-	case AccountStatusCreated:
-		return "Created"
 	}
 	return ""
 }
@@ -71,7 +71,7 @@ func (p *AccountStatus) UnmarshalJSON(data []byte) error {
 
 type Account struct {
 	// column
-	Id             uint64        `json:"id"`              // primary key
+	Id             string        `json:"id"`              // primary key
 	Email          string        `json:"email"`           // メールアドレス
 	HashedPassword string        `json:"hashed_password"` // ハッシュ化済みパスワード
 	Salt           string        `json:"salt"`            // ソルト
