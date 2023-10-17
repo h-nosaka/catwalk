@@ -55,11 +55,15 @@ func Init() {
 			db, err = gorm.Open(mysql.Open(dsn), config)
 		}
 	case "postgres":
+		sslmode := "enable"
+		if GetEnv("APP_MODE", "develop") == "develop" {
+			sslmode = "disable"
+		}
 		host := strings.Split(dbHost, ":")
-		dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=disable", dbUser, dbPassword, DBName, host[0], host[1])
+		dsn := fmt.Sprintf("user=%s password=%s dbname=%s host=%s port=%s sslmode=%s", dbUser, dbPassword, DBName, host[0], host[1], sslmode)
 		db, err = gorm.Open(postgres.Open(dsn), config)
 		if err != nil {
-			dsn := fmt.Sprintf("user=%s password=%s host=%s port=%s sslmode=disable", dbUser, dbPassword, host[0], host[1])
+			dsn := fmt.Sprintf("user=%s password=%s host=%s port=%s sslmode=%s", dbUser, dbPassword, host[0], host[1], sslmode)
 			db, err = gorm.Open(postgres.Open(dsn), config)
 		}
 	default:

@@ -261,6 +261,10 @@ func (p *IColumn) GetGoType() string {
 		value = "int"
 	case "int8":
 		value = "int64"
+	case "float4":
+		value = "float32"
+	case "float8":
+		value = "float64"
 	case "varchar", "bpchar", "json", "text", "macaddr":
 		value = "string"
 	case "timestamp", "date":
