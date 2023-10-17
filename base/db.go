@@ -55,7 +55,7 @@ func Init() {
 			db, err = gorm.Open(mysql.Open(dsn), config)
 		}
 	case "postgres":
-		sslmode := "enable"
+		sslmode := "require"
 		if GetEnv("APP_MODE", "develop") == "develop" {
 			sslmode = "disable"
 		}
