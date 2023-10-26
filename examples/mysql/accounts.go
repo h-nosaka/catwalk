@@ -25,6 +25,7 @@ func Accounts() db.ITable {
 		Indexes: db.DefaultIndex(
 			db.NewIndex("accounts_email_IDX", nil, "email"),
 			db.NewIndex("accounts_code_IDX", nil, "code"),
+			db.NewIndex("accounts_multi_IDX", nil, "code", "email"),
 		),
 		Foreignkeys: []db.IForeignkey{
 			db.NewFK("accounts_account_activates_FK", "id", "account_activates", "account_id", false, true),
