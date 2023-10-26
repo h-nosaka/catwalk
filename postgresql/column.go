@@ -115,7 +115,7 @@ func (p *IColumn) GetNullable() string {
 
 func (p *IColumn) Append() string {
 	return fmt.Sprintf(
-		"\t%s %s%s%s",
+		"\t\"%s\" %s%s%s",
 		p.Name,
 		p.GetColumnType(),
 		p.GetDefault(),
@@ -134,7 +134,7 @@ func (p *IColumn) Create(t *ITable) string {
 
 func (p *IColumn) Drop(t *ITable) string {
 	return fmt.Sprintf(
-		"ALTER TABLE %s\"%s\" DROP COLUMN %s;\n\n",
+		"ALTER TABLE %s\"%s\" DROP COLUMN \"%s\";\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -153,7 +153,7 @@ func (p *IColumn) Type(t *ITable) string {
 		)
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s\"%s\" ALTER COLUMN %s TYPE %s;\n\n",
+		"ALTER TABLE %s\"%s\" ALTER COLUMN \"%s\" TYPE %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -167,7 +167,7 @@ func (p *IColumn) SetNullable(t *ITable) string {
 		value = "SET NOT NULL"
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s\"%s\" ALTER COLUMN %s %s;\n\n",
+		"ALTER TABLE %s\"%s\" ALTER COLUMN \"%s\" %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -181,7 +181,7 @@ func (p *IColumn) SetDefault(t *ITable) string {
 		value = fmt.Sprintf("SET %s", p.GetDefault())
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s\"%s\" ALTER COLUMN %s %s;\n\n",
+		"ALTER TABLE %s\"%s\" ALTER COLUMN \"%s\" %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -193,17 +193,17 @@ func (p *IColumn) SetComment(t *ITable) string {
 	if p.Comment == nil {
 		return ""
 	}
-	return fmt.Sprintf("COMMENT ON COLUMN %s%s.%s IS '%s';\n\n", t.SchemaName(), t.Name, p.Name, *p.Comment)
+	return fmt.Sprintf("COMMENT ON COLUMN %s\"%s\".\"%s\" IS '%s';\n\n", t.SchemaName(), t.Name, p.Name, *p.Comment)
 }
 
 func (p *IColumn) DropComment(t *ITable) string {
-	return fmt.Sprintf("COMMENT ON COLUMN %s%s.%s IS NULL;\n\n", t.SchemaName(), t.Name, p.Name)
+	return fmt.Sprintf("COMMENT ON COLUMN %s\"%s\".\"%s\" IS NULL;\n\n", t.SchemaName(), t.Name, p.Name)
 }
 
 func (p *IColumn) RenameColumn(t *ITable) string {
 	if p.Rename != nil {
 		return fmt.Sprintf(
-			"ALTER TABLE %s\"%s\" RENAME COLUMN %s TO %s;\n",
+			"ALTER TABLE %s\"%s\" RENAME COLUMN \"%s\" TO \"%s\";\n",
 			t.SchemaName(),
 			t.Name,
 			p.Name,
