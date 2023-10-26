@@ -66,6 +66,10 @@ func (p *IColumn) GetColumnType() string {
 		return "int4"
 	case "int8":
 		return "int8"
+	case "float4":
+		return "float4"
+	case "float8":
+		return "float8"
 	case "uuid":
 		return "uuid"
 	case "varchar":
@@ -121,7 +125,7 @@ func (p *IColumn) Append() string {
 
 func (p *IColumn) Create(t *ITable) string {
 	return fmt.Sprintf(
-		"ALTER TABLE %s%s ADD COLUMN %s;\n\n",
+		"ALTER TABLE %s\"%s\" ADD COLUMN %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Append(),
@@ -130,7 +134,7 @@ func (p *IColumn) Create(t *ITable) string {
 
 func (p *IColumn) Drop(t *ITable) string {
 	return fmt.Sprintf(
-		"ALTER TABLE %s%s DROP COLUMN %s;\n\n",
+		"ALTER TABLE %s\"%s\" DROP COLUMN %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -140,7 +144,7 @@ func (p *IColumn) Drop(t *ITable) string {
 func (p *IColumn) Type(t *ITable) string {
 	if p.Using != nil {
 		return fmt.Sprintf(
-			"ALTER TABLE %s%s ALTER COLUMN %s TYPE %s USING %s;\n\n",
+			"ALTER TABLE %s\"%s\" ALTER COLUMN %s TYPE %s USING %s;\n\n",
 			t.SchemaName(),
 			t.Name,
 			p.Name,
@@ -149,7 +153,7 @@ func (p *IColumn) Type(t *ITable) string {
 		)
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s%s ALTER COLUMN %s TYPE %s;\n\n",
+		"ALTER TABLE %s\"%s\" ALTER COLUMN %s TYPE %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -163,7 +167,7 @@ func (p *IColumn) SetNullable(t *ITable) string {
 		value = "SET NOT NULL"
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s%s ALTER COLUMN %s %s;\n\n",
+		"ALTER TABLE %s\"%s\" ALTER COLUMN %s %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -177,7 +181,7 @@ func (p *IColumn) SetDefault(t *ITable) string {
 		value = fmt.Sprintf("SET %s", p.GetDefault())
 	}
 	return fmt.Sprintf(
-		"ALTER TABLE %s%s ALTER COLUMN %s %s;\n\n",
+		"ALTER TABLE %s\"%s\" ALTER COLUMN %s %s;\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -199,7 +203,7 @@ func (p *IColumn) DropComment(t *ITable) string {
 func (p *IColumn) RenameColumn(t *ITable) string {
 	if p.Rename != nil {
 		return fmt.Sprintf(
-			"ALTER TABLE %s%s RENAME COLUMN %s TO %s;\n",
+			"ALTER TABLE %s\"%s\" RENAME COLUMN %s TO %s;\n",
 			t.SchemaName(),
 			t.Name,
 			p.Name,

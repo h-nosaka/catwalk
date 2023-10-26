@@ -38,7 +38,7 @@ func NewFK(name string, column string, reftable string, refcolumn string, hasone
 
 func (p *IForeignkey) Create(t *ITable) string {
 	return fmt.Sprintf(
-		"ALTER TABLE ONLY %s%s ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s%s(%s);\n\n",
+		"ALTER TABLE ONLY %s\"%s\" ADD CONSTRAINT %s FOREIGN KEY (%s) REFERENCES %s\"%s\"(%s);\n\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,
@@ -51,7 +51,7 @@ func (p *IForeignkey) Create(t *ITable) string {
 
 func (p *IForeignkey) Drop(t *ITable) string {
 	return fmt.Sprintf(
-		"ALTER TABLE %s%s DROP CONSTRAINT %s;\n",
+		"ALTER TABLE %s\"%s\" DROP CONSTRAINT %s;\n",
 		t.SchemaName(),
 		t.Name,
 		p.Name,

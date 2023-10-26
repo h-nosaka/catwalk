@@ -115,7 +115,7 @@ func (p *ITable) Create() string {
 	for _, seq := range p.Sequences {
 		buf.WriteString(seq.Create(p))
 	}
-	buf.WriteString(fmt.Sprintf("CREATE TABLE %s%s (\n", p.SchemaName(), p.Name))
+	buf.WriteString(fmt.Sprintf("CREATE TABLE %s\"%s\" (\n", p.SchemaName(), p.Name))
 	for i, col := range p.Columns {
 		buf.WriteString(col.Append())
 		if i+1 < len(p.Columns) {
@@ -143,7 +143,7 @@ func (p *ITable) Create() string {
 
 func (p *ITable) Drop() string {
 	return fmt.Sprintf(
-		"DROP TABLE IF EXISTS %s%s RESTRICT;\n",
+		"DROP TABLE IF EXISTS %s\"%s\" RESTRICT;\n",
 		p.SchemaName(),
 		p.Name,
 	)
@@ -153,17 +153,17 @@ func (p *ITable) SetComment() string {
 	if p.Comment == nil {
 		return ""
 	}
-	return fmt.Sprintf("COMMENT ON TABLE %s%s IS '%s';\n\n", p.SchemaName(), p.Name, *p.Comment)
+	return fmt.Sprintf("COMMENT ON TABLE %s\"%s\" IS '%s';\n\n", p.SchemaName(), p.Name, *p.Comment)
 }
 
 func (p *ITable) DropComment() string {
-	return fmt.Sprintf("COMMENT ON TABLE %s%s IS NULL;\n\n", p.SchemaName(), p.Name)
+	return fmt.Sprintf("COMMENT ON TABLE %s\"%s\" IS NULL;\n\n", p.SchemaName(), p.Name)
 }
 
 func (p *ITable) RenameTable() string {
 	if p.Rename != nil {
 		return fmt.Sprintf(
-			"ALTER TABLE %s%s RENAME TO %s;\n",
+			"ALTER TABLE %s\"%s\" RENAME TO \"%s\";\n",
 			p.SchemaName(),
 			p.Name,
 			*p.Rename,

@@ -39,7 +39,7 @@ func (p *ISequence) GetMax() string {
 
 func (p *ISequence) Create(t *ITable) string {
 	return fmt.Sprintf(
-		"CREATE SEQUENCE %s%s START WITH %d INCREMENT BY %d %s %s CACHE 1;\n\n",
+		"CREATE SEQUENCE %s\"%s\" START WITH %d INCREMENT BY %d %s %s CACHE 1;\n\n",
 		t.SchemaName(),
 		p.Sequencename,
 		p.StartValue,
@@ -51,7 +51,7 @@ func (p *ISequence) Create(t *ITable) string {
 
 func (p *ISequence) Drop(t *ITable) string {
 	return fmt.Sprintf(
-		"DROP SEQUENCE %s%s;\n",
+		"DROP SEQUENCE %s\"%s\";\n",
 		t.SchemaName(),
 		p.Sequencename,
 	)
