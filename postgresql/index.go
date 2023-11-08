@@ -39,30 +39,30 @@ func (p *IIndex) Create(t *ITable) string {
 		switch *p.ConstraintType {
 		case "PRIMARY KEY":
 			return fmt.Sprintf(
-				"ALTER TABLE %s\"%s\" ADD CONSTRAINT %s PRIMARY KEY (%s);\n\n",
+				"ALTER TABLE %s\"%s\" ADD CONSTRAINT %s PRIMARY KEY (`%s`);\n\n",
 				t.SchemaName(),
 				t.Name,
 				p.Name,
-				strings.Join(p.Columns, ","),
+				strings.Join(p.Columns, "`,`"),
 			)
 		case "UNIQUE":
 			return fmt.Sprintf(
-				"ALTER TABLE %s\"%s\" ADD CONSTRAINT %s UNIQUE (%s);\n\n",
+				"ALTER TABLE %s\"%s\" ADD CONSTRAINT %s UNIQUE (`%s`);\n\n",
 				t.SchemaName(),
 				t.Name,
 				p.Name,
-				strings.Join(p.Columns, ","),
+				strings.Join(p.Columns, "`,`"),
 			)
 		default:
 			panic(fmt.Sprintf("unknown constraint_type: %s", *p.ConstraintType))
 		}
 	}
 	return fmt.Sprintf(
-		"CREATE INDEX %s ON %s\"%s\" (%s);\n\n",
+		"CREATE INDEX %s ON %s\"%s\" (`%s`);\n\n",
 		p.Name,
 		t.SchemaName(),
 		t.Name,
-		strings.Join(p.Columns, ","),
+		strings.Join(p.Columns, "`,`"),
 	)
 }
 
