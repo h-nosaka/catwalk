@@ -50,7 +50,7 @@ func DefaultColumn(cols ...IColumn) []IColumn {
 
 func DefaultUuidColumn(cols ...IColumn) []IColumn {
 	rs := []IColumn{
-		NewColumn("id", "uuid", nil, base.String("UUID()"), base.Bool(false), base.String("primary key"), nil),
+		NewColumn("id", "uuid", nil, base.String("uuid()"), base.Bool(false), base.String("primary key"), nil),
 	}
 	rs = append(rs, cols...)
 	rs = append(
@@ -68,7 +68,7 @@ func TimestampColumn() []IColumn {
 }
 
 func (p *IColumn) GetDefault() string {
-	if p.Defaults != nil && *p.Defaults != "" {
+	if p.Defaults != nil && *p.Defaults != "" && *p.Defaults != "NULL" {
 		return fmt.Sprintf(" DEFAULT %s", *p.Defaults)
 	}
 	return ""
