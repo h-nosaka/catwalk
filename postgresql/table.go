@@ -357,6 +357,49 @@ func (p *ITable) CreateGoModel(path string) {
 	}
 }
 
+func (p *ITable) CreateGoFixture(path string) bool {
+	buf := bytes.NewBufferString("package fixtures\n\n")
+	con := pluralize.NewClient()
+	table := con.Singular(p.Name)
+	name := strcase.ToCamel(table)
+	// 雛形
+	buf.WriteString(fmt.Sprintf(`import (
+	"github.com/google/uuid"
+	"gorm.io/gorm"
+)
+
+func %s(setter func(model *models.%s)) *models.%s {
+	model := &models.%s{
+		Id: uuid.NewString(),
+	}
+	setter(model)
+	return model
+}
+
+func Create%s(db *gorm.DB, setter func(model *models.%s)) *models.%s {
+	model := %s(setter)
+	if err := db.Create(model).Error; err != nil {
+		return nil
+	}
+	return model
+}`, name, name, name, name, name, name, name, name))
+	// ファイル出力
+	filename := fmt.Sprintf("%s/%s.go", path, table)
+	if _, err := os.Stat(filename); err != nil { // ファイルの上書きはしない
+		fp, err := os.Create(filename)
+		if err != nil {
+			fmt.Println(err)
+			return false
+		}
+		defer fp.Close()
+		if _, err := fp.Write(buf.Bytes()); err != nil {
+			fmt.Printf("WriteString Error: %s\n", err.Error())
+			return false
+		}
+	}
+	return true
+}
+
 func (p *ITable) CreateSchemaFile() []byte {
 	// con := pluralize.NewClient()
 	buf := bytes.NewBuffer([]byte{})

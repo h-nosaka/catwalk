@@ -37,6 +37,13 @@ func TestModel(t *testing.T) {
 	}
 }
 
+func TestFixture(t *testing.T) {
+	SetEnv()
+	base.Init()
+	schema := Schema()
+	schema.Fixture("./fixtures")
+}
+
 func TestCreateDatabase(t *testing.T) {
 	SetEnv()
 	base.Init()

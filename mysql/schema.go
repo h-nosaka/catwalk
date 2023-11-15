@@ -136,10 +136,34 @@ func (p *ISchema) Model(output ...string) {
 	fmt.Printf("Model comleted: %d models\n", len(p.Tables))
 }
 
+func (p *ISchema) Fixture(output ...string) {
+	base.Init()
+	gopath := "./tests/fixtures"
+	if len(output) > 0 && len(output[0]) > 0 {
+		gopath = output[0]
+	}
+
+	cnt := 0
+	for _, table := range p.Tables {
+		if table.CreateGoFixture(gopath) {
+			cnt++
+		}
+	}
+	if err := exec.Command("goimports", "-w", fmt.Sprintf("%s/", gopath)).Run(); err != nil {
+		panic(err)
+	}
+	if err := exec.Command("go", "fmt", fmt.Sprintf("%s/...", gopath)).Run(); err != nil {
+		panic(err)
+	}
+	fmt.Printf("Fixture comleted: %d fixtures\n", cnt)
+}
+
 func (p *ISchema) CreateSchema(output string) {
 	for _, table := range p.Tables {
 		filename := fmt.Sprintf("%s/%s.go", output, table.Name)
-		os.WriteFile(filename, table.CreateSchemaFile(), 0666)
+		if err := os.WriteFile(filename, table.CreateSchemaFile(), 0666); err != nil {
+			panic(err)
+		}
 	}
 	if err := exec.Command("go", "fmt", fmt.Sprintf("%s/...", output)).Run(); err != nil {
 		panic(err)
