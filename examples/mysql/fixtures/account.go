@@ -6,15 +6,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func Account(setter func(model *models.Account)) *models.Account {
+func Account(setters ...func(model *models.Account)) *models.Account {
 	model := &models.Account{
 		Id: uuid.NewString()}
-	setter(model)
+	for _, setter := range setters {
+		setter(model)
+	}
 	return model
 }
 
-func CreateAccount(db *gorm.DB, setter func(model *models.Account)) *models.Account {
-	model := Account(setter)
+func CreateAccount(db *gorm.DB, setters ...func(model *models.Account)) *models.Account {
+	model := Account(setters...)
 	if err := db.Create(model).Error; err != nil {
 		return nil
 	}

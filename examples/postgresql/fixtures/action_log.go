@@ -6,16 +6,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func ActionLog(setter func(model *models.ActionLog)) *models.ActionLog {
+func ActionLog(setters ...func(model *models.ActionLog)) *models.ActionLog {
 	model := &models.ActionLog{
 		Id: uuid.NewString(),
 	}
-	setter(model)
+	for _, setter := range setters {
+		setter(model)
+	}
 	return model
 }
 
-func CreateActionLog(db *gorm.DB, setter func(model *models.ActionLog)) *models.ActionLog {
-	model := ActionLog(setter)
+func CreateActionLog(db *gorm.DB, setters ...func(model *models.ActionLog)) *models.ActionLog {
+	model := ActionLog(setters...)
 	if err := db.Create(model).Error; err != nil {
 		return nil
 	}

@@ -5,14 +5,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func Pincode(setter func(model *models.Pincode)) *models.Pincode {
+func Pincode(setters ...func(model *models.Pincode)) *models.Pincode {
 	model := &models.Pincode{}
-	setter(model)
+	for _, setter := range setters {
+		setter(model)
+	}
 	return model
 }
 
-func CreatePincode(db *gorm.DB, setter func(model *models.Pincode)) *models.Pincode {
-	model := Pincode(setter)
+func CreatePincode(db *gorm.DB, setters ...func(model *models.Pincode)) *models.Pincode {
+	model := Pincode(setters...)
 	if err := db.Create(model).Error; err != nil {
 		return nil
 	}

@@ -6,16 +6,18 @@ import (
 	"gorm.io/gorm"
 )
 
-func AccountPincode(setter func(model *models.AccountPincode)) *models.AccountPincode {
+func AccountPincode(setters ...func(model *models.AccountPincode)) *models.AccountPincode {
 	model := &models.AccountPincode{
 		Id: uuid.NewString(),
 	}
-	setter(model)
+	for _, setter := range setters {
+		setter(model)
+	}
 	return model
 }
 
-func CreateAccountPincode(db *gorm.DB, setter func(model *models.AccountPincode)) *models.AccountPincode {
-	model := AccountPincode(setter)
+func CreateAccountPincode(db *gorm.DB, setters ...func(model *models.AccountPincode)) *models.AccountPincode {
+	model := AccountPincode(setters...)
 	if err := db.Create(model).Error; err != nil {
 		return nil
 	}

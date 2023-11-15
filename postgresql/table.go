@@ -368,16 +368,18 @@ func (p *ITable) CreateGoFixture(path string) bool {
 	"gorm.io/gorm"
 )
 
-func %s(setter func(model *models.%s)) *models.%s {
+func %s(setters ...func(model *models.%s)) *models.%s {
 	model := &models.%s{
 		Id: uuid.NewString(),
 	}
-	setter(model)
+	for _, setter := range setters {
+		setter(model)
+	}
 	return model
 }
 
-func Create%s(db *gorm.DB, setter func(model *models.%s)) *models.%s {
-	model := %s(setter)
+func Create%s(db *gorm.DB, setters ...func(model *models.%s)) *models.%s {
+	model := %s(setters...)
 	if err := db.Create(model).Error; err != nil {
 		return nil
 	}
