@@ -56,7 +56,7 @@ func Init() {
 		}
 	case "postgres":
 		sslmode := "require"
-		if GetEnv("APP_MODE", "develop") == "develop" {
+		if GetEnv("APP_MODE", "production") == "develop" {
 			sslmode = "disable"
 		}
 		host := strings.Split(dbHost, ":")
@@ -70,7 +70,11 @@ func Init() {
 		panic(fmt.Sprintf("未定義のデータベースタイプ: %s", DBType))
 	}
 	if err != nil {
-		panic(err)
+		if strings.Contains(err.Error(), dbPassword) {
+			panic(fmt.Errorf("DB接続エラー: host=%s, db=%s", dbHost, DBName))
+		} else {
+			panic(err)
+		}
 	}
 	if GetEnvBool("DEBUG", false) {
 		DB = db.Debug()
