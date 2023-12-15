@@ -43,6 +43,9 @@ func GetEnvInt(key string, fallback int) int {
 }
 
 func String(src string) *string {
+	if len(src) == 0 {
+		return nil
+	}
 	return &src
 }
 
@@ -79,4 +82,12 @@ func ReJson(src string) string {
 		return src
 	}
 	return ToJson(data, src, true)
+}
+
+func ToPrettyJson(src interface{}) string {
+	rs, err := json.MarshalIndent(src, "", "  ")
+	if err != nil {
+		return "{}"
+	}
+	return string(rs)
 }

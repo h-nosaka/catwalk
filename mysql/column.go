@@ -211,6 +211,8 @@ func (p *IColumn) GetGoType() string {
 		value = "bool"
 	case "blob", "tinyblob", "midiumblob", "longblob", "binary", "varbinary":
 		value = "[]byte"
+	case "bps":
+		value = "*bps.Bps"
 	default:
 		panic(fmt.Sprintf("unknown datatype: %s", p.DataType))
 	}
@@ -270,6 +272,8 @@ func (p *IColumn) GetDartType() string {
 		value = "bool"
 	case "blob", "tinyblob", "midiumblob", "longblob", "binary", "varbinary":
 		value = "List<int>"
+	case "bps":
+		value = "String"
 	default:
 		panic(fmt.Sprintf("unknown datatype: %s", p.DataType))
 	}

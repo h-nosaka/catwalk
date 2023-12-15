@@ -13,6 +13,7 @@ func Schema() *db.ISchema {
 			AccountActivates(),
 			AccountPincodes(),
 			ActionLogs(),
+			Item(),
 		},
 	}
 }

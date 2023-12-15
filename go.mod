@@ -71,6 +71,7 @@ require (
 )
 
 require (
+	github.com/Rhymond/go-money v1.0.10
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect

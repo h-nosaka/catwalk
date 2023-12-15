@@ -76,6 +76,7 @@ func Init() {
 			panic(err)
 		}
 	}
+
 	if GetEnvBool("DEBUG", false) {
 		DB = db.Debug()
 	} else {

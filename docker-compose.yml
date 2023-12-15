@@ -6,11 +6,11 @@ x-logging: &logging
     max-file: '1'
     max-size: 1m
 x-golang: &go
-  golang:1.19
+  golang:1.20
 x-mariadb: &mdb
   mariadb:10.7
 x-postgres: &pdb
-  postgres:15
+  postgres:15-alpine
 
 services:
   app:
