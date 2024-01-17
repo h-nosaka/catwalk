@@ -2,13 +2,10 @@
 
 Catwalk is a tool to manage DB schema.  
 supported mysql  
-later postgresql
+supported postgresql  
+later elasticsearch
 
 ### Instration
-
-```shell
-go install github.com/h-nosaka/catwalk@latest
-```
 
 ```shell
 go get github.com/h-nosaka/catwalk
@@ -16,33 +13,17 @@ go get github.com/h-nosaka/catwalk
 
 ### Usage
 
-```shell
-catwalk diff -c ./schema/schema.yaml
+```go
+catwalk.NewSchema(
+  "app", catwalk.SchemaModeMySQL,
+  catwalk.NewTable("app", "accounts", catwalk.JsonCaseSnake, "アカウントマスタ").SetDefaultColumns(
+		catwalk.DataTypeUUID,
+		catwalk.NewColumn("email", catwalk.DataTypeString, 256, false, "メールアドレス").Done(),
+	).SetDefaultIndexes().Done(),
+)
 ```
 
-```shell
-catwalk run -c ./shcema/shcema.yaml
-```
+### examples
 
-```shell
-catwalk help
-```
-
-### Usage on mage
-
-```shell
-# exsample magefile
-mage -compile ./catwalk
-./catwalk
-```
-
-```shell
-./catwalk createDatabase
-./catwalk migrate
-```
-
-### mysql examples
-
-- [schema](./examples/schema.go)
-- [yaml](./examples/schema.yaml)
-- [test](./examples/schema_test.go)
+- [schema](./examples/examples.go)
+- [test](./examples/examples_test.go)
