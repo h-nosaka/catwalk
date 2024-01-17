@@ -1,0 +1,55 @@
+package examples
+
+import "github.com/h-nosaka/catwalk"
+
+func Items() catwalk.Table {
+	return catwalk.NewTable("app", "items", catwalk.JsonCaseSnake, "データバリエーション").SetDefaultColumns(
+		catwalk.DataTypeUUID,
+		catwalk.NewColumn("price", catwalk.DataTypeString, 32, false, "価格").Done(),
+		catwalk.NewColumn("int8", catwalk.DataTypeInt8, 0, false, "").Done(),
+		catwalk.NewColumn("int16", catwalk.DataTypeInt16, 0, false, "").Done(),
+		catwalk.NewColumn("int32", catwalk.DataTypeInt32, 0, false, "").Done(),
+		catwalk.NewColumn("int64", catwalk.DataTypeInt64, 0, false, "").Done(),
+		catwalk.NewColumn("uint8", catwalk.DataTypeUint8, 0, false, "").Done(),
+		catwalk.NewColumn("uint16", catwalk.DataTypeUint16, 0, false, "").Done(),
+		catwalk.NewColumn("uint32", catwalk.DataTypeUint32, 0, false, "").Done(),
+		catwalk.NewColumn("uint64", catwalk.DataTypeUint64, 0, false, "").Done(),
+		catwalk.NewColumn("float64", catwalk.DataTypeFloat64, 0, false, "").Done(),
+		catwalk.NewColumn("string", catwalk.DataTypeString, 64, false, "").Done(),
+		catwalk.NewColumn("fixstring", catwalk.DataTypeFixString, 64, false, "").Done(),
+		catwalk.NewColumn("text_s", catwalk.DataTypeText64K, 0, false, "").Done(),
+		catwalk.NewColumn("text_m", catwalk.DataTypeText16M, 0, false, "").Done(),
+		catwalk.NewColumn("text_l", catwalk.DataTypeText4G, 0, false, "").Done(),
+		catwalk.NewColumn("blob_s", catwalk.DataTypeBlob64K, 0, false, "").Done(),
+		catwalk.NewColumn("blob_m", catwalk.DataTypeBlob16M, 0, false, "").Done(),
+		catwalk.NewColumn("blob_l", catwalk.DataTypeBlob4G, 0, false, "").Done(),
+		catwalk.NewColumn("bytes", catwalk.DataTypeBytes, 0, false, "").Done(),
+		catwalk.NewColumn("json", catwalk.DataTypeJson, 0, false, "").Done(),
+		catwalk.NewColumn("timestamp", catwalk.DataTypeTimestamp, 0, false, "").Done(),
+		catwalk.NewColumn("datetime", catwalk.DataTypeDatetime, 0, false, "").Done(),
+		catwalk.NewColumn("enumuint", catwalk.DataTypeUint8, 0, false, "").Done(),
+		catwalk.NewColumn("enumstring", catwalk.DataTypeString, 64, false, "").Done(),
+		catwalk.NewColumn("enumbitfield", catwalk.DataTypeUint64, 0, false, "").Done(),
+		catwalk.NewColumn("bps", catwalk.DataTypeBps, 0, false, "").Done(),
+		catwalk.NewColumn("masked", catwalk.DataTypeMaskedString, 256, false, "").SetDefault("''").Done(),
+	).SetDefaultIndexes(
+		catwalk.NewIndex("items_price_idx", catwalk.IndexTypeNotUnique, "price"),
+	).SetEnums(
+		catwalk.NewEnum("enumuint", catwalk.EnumTypeUint,
+			catwalk.EnumValue{Key: "Created", Value: 1},
+			catwalk.EnumValue{Key: "Active", Value: 2},
+			catwalk.EnumValue{Key: "Deleted", Value: 3},
+		),
+		catwalk.NewEnum("enumstring", catwalk.EnumTypeString,
+			catwalk.EnumValue{Key: "Created", Value: "created"},
+			catwalk.EnumValue{Key: "Active", Value: "active"},
+			catwalk.EnumValue{Key: "Deleted", Value: "deleted"},
+		),
+		catwalk.NewEnum("enumbitfield", catwalk.EnumTypeBitfield,
+			catwalk.EnumValue{Key: "Read", Value: 1},
+			catwalk.EnumValue{Key: "Write", Value: 2},
+			catwalk.EnumValue{Key: "Manage", Value: 3},
+			catwalk.EnumValue{Key: "Admin", Value: 4},
+		),
+	).Done()
+}

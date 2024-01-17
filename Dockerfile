@@ -14,10 +14,9 @@ RUN go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 RUN go install golang.org/x/tools/cmd/goimports@latest
 # ツール
 RUN go install github.com/goark/depm@latest
-RUN go install github.com/magefile/mage@latest
 RUN curl https://gotest-release.s3.amazonaws.com/gotest_linux > /usr/local/bin/gotest && chmod +x /usr/local/bin/gotest
 
 COPY . /opt/app
 WORKDIR /opt/app
 
-CMD ./main_app
+CMD tail -f /dev/null

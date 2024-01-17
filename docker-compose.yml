@@ -33,6 +33,7 @@ services:
     command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
     - mdb-data:/var/lib/mysql
+    - mdb-log:/var/log/mysql
     # ports:
     # - 3306:3306
     logging: *logging
@@ -54,4 +55,5 @@ services:
 
 volumes:
   mdb-data:
+  mdb-log:
   pdb-data:

@@ -191,7 +191,6 @@ func (p Bps) Value() (driver.Value, error) {
 }
 
 func (p *Bps) Scan(data interface{}) error {
-	fmt.Println(data)
 	*p = *New(data)
 	return p.Error
 }

@@ -1,6 +1,6 @@
 module github.com/h-nosaka/catwalk
 
-go 1.19
+go 1.20
 
 require (
 	github.com/alicebob/miniredis/v2 v2.31.0
@@ -71,7 +71,6 @@ require (
 )
 
 require (
-	github.com/Rhymond/go-money v1.0.10
 	github.com/go-sql-driver/mysql v1.7.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
@@ -80,5 +79,5 @@ require (
 	github.com/redis/go-redis/v9 v9.3.0
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.15.0 // indirect
-	golang.org/x/text v0.14.0 // indirect
+	golang.org/x/text v0.14.0
 )

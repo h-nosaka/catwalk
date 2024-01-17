@@ -28,6 +28,9 @@ func TestNewBps(t *testing.T) {
 	if val := bps.New("1000.12"); val.Raw.Int64() != 10001200 {
 		t.Error("string: 期待値と異なる", val.Raw.Int64())
 	}
+	if val := bps.New(""); val.Raw.Int64() != 0 {
+		t.Error("string: 期待値と異なる", val.Raw.Int64())
+	}
 }
 
 func TestBpsInt64(t *testing.T) {

@@ -1,0 +1,373 @@
+name: app
+mode: 0
+tables:
+- schema: app
+  name: items
+  json_case: snake
+  comment: データバリエーション
+  columns:
+  - name: id
+    datatype: 0
+    default: uuid()
+    comment: ID
+  - name: price
+    datatype: 10
+    count: 32
+    comment: 価格
+  - name: int8
+    datatype: 2
+    count: 4
+  - name: int16
+    datatype: 1
+    count: 6
+  - name: int32
+    datatype: 3
+    count: 11
+  - name: int64
+    datatype: 4
+    count: 20
+  - name: uint8
+    datatype: 6
+    count: 3
+  - name: uint16
+    datatype: 5
+    count: 5
+  - name: uint32
+    datatype: 7
+    count: 10
+  - name: uint64
+    datatype: 8
+    count: 20
+  - name: float64
+    datatype: 9
+  - name: string
+    datatype: 10
+    count: 64
+  - name: fixstring
+    datatype: 11
+    count: 64
+  - name: text_s
+    datatype: 14
+  - name: text_m
+    datatype: 13
+  - name: text_l
+    datatype: 12
+  - name: blob_s
+    datatype: 17
+  - name: blob_m
+    datatype: 16
+  - name: blob_l
+    datatype: 15
+  - name: bytes
+    datatype: 0
+    count: 1
+  - name: json
+    datatype: 12
+  - name: timestamp
+    datatype: 20
+    extra: on update current_timestamp()
+    default: current_timestamp()
+  - name: datetime
+    datatype: 21
+  - name: enumuint
+    datatype: 6
+    count: 3
+  - name: enumstring
+    datatype: 10
+    count: 64
+  - name: enumbitfield
+    datatype: 8
+    count: 20
+  - name: created_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 作成日
+  - name: updated_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 更新日
+  indexes:
+  - name: PRIMARY
+    type: PRIMARY KEY
+    columns:
+    - id
+  - name: items_price_idx
+    type: ""
+    columns:
+    - price
+  relations: []
+  enums: []
+  partitions: null
+- schema: app
+  name: account_pins
+  json_case: snake
+  comment: アカウントとピンの紐付け
+  columns:
+  - name: id
+    datatype: 0
+    default: uuid()
+    comment: ID
+  - name: account_id
+    datatype: 0
+    comment: accounts.id
+  - name: pin_id
+    datatype: 0
+    comment: pins.id
+  - name: expired_at
+    datatype: 20
+    default: "NULL"
+    nullable: true
+    comment: PIN有効期限日時
+  - name: deleted_at
+    datatype: 20
+    default: "NULL"
+    nullable: true
+    comment: 使用済み日時
+  - name: created_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 作成日
+  - name: updated_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 更新日
+  indexes:
+  - name: PRIMARY
+    type: PRIMARY KEY
+    columns:
+    - id
+  - name: account_pins_account_id_idx
+    type: ""
+    columns:
+    - account_id
+  - name: account_pins_pin_id_idx
+    type: ""
+    columns:
+    - pin_id
+  relations:
+  - name: account_pins_accounts_fk
+    column: account_id
+    reftable: accounts
+    refcolumn: id
+    hasone: false
+    hasany: false
+    isforeignkey: true
+  - name: account_pins_pins_fk
+    column: pin_id
+    reftable: pins
+    refcolumn: id
+    hasone: false
+    hasany: false
+    isforeignkey: true
+  enums: []
+  partitions: null
+- schema: app
+  name: action_logs
+  json_case: snake
+  comment: アクションログ
+  columns:
+  - name: id
+    datatype: 0
+    default: uuid()
+    comment: ID
+  - name: uuid
+    datatype: 10
+    count: 64
+    comment: UUID
+  - name: email
+    datatype: 10
+    count: 256
+    comment: メールアドレス
+  - name: action_type
+    datatype: 1
+    count: 6
+    comment: タイプ
+  - name: log
+    datatype: 13
+    comment: メッセージ
+  - name: recorded_at
+    datatype: 20
+    default: "NULL"
+    nullable: true
+    comment: 実行日時
+  - name: created_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 作成日
+  - name: updated_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 更新日
+  indexes: []
+  relations: []
+  enums: []
+  partitions: null
+- schema: app
+  name: account_devices
+  json_case: snake
+  comment: デバイス管理マスタ
+  columns:
+  - name: id
+    datatype: 0
+    default: uuid()
+    comment: ID
+  - name: account_id
+    datatype: 0
+    comment: accounts.id
+  - name: uuid
+    datatype: 10
+    count: 64
+    comment: デバイスID
+  - name: activated_at
+    datatype: 20
+    default: "NULL"
+    nullable: true
+    comment: アクティベート日時
+  - name: last_login_at
+    datatype: 20
+    default: "NULL"
+    nullable: true
+    comment: 最終ログイン日時
+  - name: created_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 作成日
+  - name: updated_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 更新日
+  indexes:
+  - name: PRIMARY
+    type: PRIMARY KEY
+    columns:
+    - id
+  - name: account_devices_account_id_idx
+    type: ""
+    columns:
+    - account_id
+  - name: account_devices_uuid_idx
+    type: ""
+    columns:
+    - uuid
+  relations:
+  - name: account_devices_accounts_fk
+    column: account_id
+    reftable: accounts
+    refcolumn: id
+    hasone: false
+    hasany: false
+    isforeignkey: true
+  enums: []
+  partitions: null
+- schema: app
+  name: accounts
+  json_case: snake
+  comment: アカウントマスタ
+  columns:
+  - name: id
+    datatype: 0
+    default: uuid()
+    comment: ID
+  - name: email
+    datatype: 10
+    count: 256
+    comment: メールアドレス
+  - name: hashed_password
+    datatype: 10
+    count: 256
+    comment: ハッシュ化済みパスワード
+  - name: salt
+    datatype: 10
+    count: 8
+    comment: ソルト
+  - name: notification_id
+    datatype: 0
+    comment: notifications.id
+  - name: role
+    datatype: 7
+    count: 10
+    comment: ロール
+  - name: state
+    datatype: 6
+    count: 3
+    comment: ステータス
+  - name: flags
+    datatype: 8
+    count: 20
+    comment: フラグ
+  - name: freezed_at
+    datatype: 20
+    default: "NULL"
+    nullable: true
+    comment: 凍結日
+  - name: deleted_at
+    datatype: 20
+    default: "NULL"
+    nullable: true
+    comment: 削除日
+  - name: created_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 作成日
+  - name: updated_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 更新日
+  indexes:
+  - name: PRIMARY
+    type: PRIMARY KEY
+    columns:
+    - id
+  - name: accounts_multi_idx
+    type: UNIQUE
+    columns:
+    - email
+    - deleted_at
+  - name: accounts_email_idx
+    type: ""
+    columns:
+    - email
+  - name: accounts_state_idx
+    type: ""
+    columns:
+    - state
+  relations: []
+  enums: []
+  partitions: null
+- schema: app
+  name: pins
+  json_case: snake
+  comment: ピンコードマスタ
+  columns:
+  - name: id
+    datatype: 0
+    default: uuid()
+    comment: ID
+  - name: pin
+    datatype: 10
+    count: 128
+    comment: ピン
+  - name: usage
+    datatype: 2
+    count: 3
+    comment: 用途
+  - name: created_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 作成日
+  - name: updated_at
+    datatype: 20
+    default: current_timestamp()
+    comment: 更新日
+  indexes:
+  - name: PRIMARY
+    type: PRIMARY KEY
+    columns:
+    - id
+  - name: pins_pin_idx
+    type: ""
+    columns:
+    - pin
+  relations: []
+  enums: []
+  partitions: null

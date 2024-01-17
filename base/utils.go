@@ -3,8 +3,11 @@ package base
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -90,4 +93,21 @@ func ToPrettyJson(src interface{}) string {
 		return "{}"
 	}
 	return string(rs)
+}
+
+func Diff(src string, dest string) string {
+	fmt.Println(dest, src)
+	return string(_Diff("dest.txt", []byte(dest), "src.txt", []byte(src)))
+}
+
+func Recover() {
+	if rec := recover(); rec != nil {
+		i := 1
+		_, file, line, ok := runtime.Caller(i)
+		for ok && filepath.Base(file) == "utils.go" {
+			i++
+			_, file, line, _ = runtime.Caller(i)
+		}
+		panic(fmt.Sprintf("%s:%d %s", file, line, rec)) // ログ取得したらfiberのエラーハンドリングに任せる
+	}
 }
